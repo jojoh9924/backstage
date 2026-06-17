@@ -909,9 +909,17 @@ export function EngineeringInsightsPage() {
   return (
     <Page themeId="tool">
       <Content>
-        <Typography className={classes.pageTitle}>
-          Engineering Insights
-        </Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Typography className={classes.pageTitle}>
+            Engineering Insights
+          </Typography>
+          <Typography
+            className={classes.pageTitle}
+            style={{ paddingRight: 24 }}
+          >
+            team-a
+          </Typography>
+        </Box>
 
         <Tabs
           value={0}

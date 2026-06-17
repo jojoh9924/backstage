@@ -21,6 +21,7 @@ import {
   type EntityPresentationApi,
 } from '@backstage/plugin-catalog-react';
 import Chip from '@material-ui/core/Chip';
+import Tooltip from '@material-ui/core/Tooltip';
 import { CatalogTableRow } from './types';
 import { OverflowTooltip, TableColumn } from '@backstage/core-components';
 import {
@@ -66,30 +67,25 @@ function isDataFresh(entityName: string): boolean {
 }
 
 function computeReadinessScore(entity: Entity): number {
-  const MAX_RAW = 12.5;
   let raw = 0;
-  if (getEntityRelations(entity, RELATION_OWNED_BY).length > 0) raw += 1;
-  if (entity.kind) raw += 0.5;
-  if (entity.spec?.type) raw += 0.5;
-  if (entity.metadata?.description) raw += 1;
+  if (getEntityRelations(entity, RELATION_OWNED_BY).length > 0) raw += 1.5;
+  if (entity.metadata?.description) raw += 1.5;
   if (entity.spec?.lifecycle) raw += 1;
   if (
     getEntityRelations(entity, RELATION_PART_OF, { kind: 'system' }).length > 0
   )
-    raw += 1;
+    raw += 1.5;
   if ((entity.metadata?.tags ?? []).length > 0) raw += 0.5;
-  const hasSource = !!(
-    entity.metadata?.annotations?.['backstage.io/source-location'] ||
-    entity.metadata?.annotations?.['backstage.io/managed-by-location']
-  );
-  if (hasSource) raw += 3;
+  const sourceLocation =
+    entity.metadata?.annotations?.['backstage.io/source-location'];
+  if (sourceLocation && sourceLocation.startsWith('url:')) raw += 1.5;
   if (
     entity.metadata?.annotations?.[TECHDOCS_ANNOTATION] ||
     entity.metadata?.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
   )
     raw += 1;
-  if (isDataFresh(entity.metadata.name)) raw += 3;
-  return Math.round((raw / MAX_RAW) * 10 * 10) / 10;
+  if (isDataFresh(entity.metadata.name)) raw += 1.5;
+  return Math.round(raw * 10) / 10;
 }
 
 function scoreColor(score: number): string {
@@ -321,18 +317,51 @@ export const columnFactories = Object.freeze({
   },
   createReadinessScoreColumn(): TableColumn<CatalogTableRow> {
     return {
-      title: 'Readiness',
+      title: (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          Readiness
+          <Tooltip
+            title="The readiness score (0–10) measures how complete and fresh a catalog entry is."
+            arrow
+            placement="top"
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                border: '1.5px solid rgba(0,0,0,0.4)',
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                color: 'rgba(0,0,0,0.5)',
+                cursor: 'help',
+                flexShrink: 0,
+              }}
+            >
+              ?
+            </span>
+          </Tooltip>
+        </span>
+      ),
       sorting: true,
       headerStyle: { textAlign: 'center' },
-      cellStyle: { textAlign: 'center', paddingRight: 24 },
+      cellStyle: { textAlign: 'center', paddingRight: 50 },
       customSort({ entity: a }, { entity: b }) {
         return computeReadinessScore(a) - computeReadinessScore(b);
       },
       render: ({ entity }) => {
         const score = computeReadinessScore(entity);
         const color = scoreColor(score);
+        const namespace = entity.metadata.namespace || 'default';
+        const kind = entity.kind.toLocaleLowerCase('en-US');
+        const name = entity.metadata.name;
+        const href = `/catalog/${namespace}/${kind}/${name}`;
         return (
-          <div
+          <a
+            href={href}
             title={`Readiness Score: ${score.toFixed(1)} / 10`}
             style={{
               display: 'inline-flex',
@@ -346,10 +375,12 @@ export const columnFactories = Object.freeze({
               color: '#000',
               fontSize: '0.75rem',
               fontWeight: 700,
+              textDecoration: 'none',
+              cursor: 'pointer',
             }}
           >
             {score.toFixed(1)}
-          </div>
+          </a>
         );
       },
       width: 'auto',

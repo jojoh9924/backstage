@@ -127,7 +127,7 @@ export const notificationsPlugin = createBackendPlugin({
           {
             id: 'demo-broadcast-team-v1',
             title:
-              'Your team Red Hat Desktop completed 24 self-service actions this month, saving an estimated 5 days of time.',
+              'Your team team-a completed 24 self-service actions this month, saving an estimated 5 days of time.',
             link: '/engineering-insights',
           },
         ];

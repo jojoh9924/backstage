@@ -62,26 +62,21 @@ function isDataFresh(entityName: string): boolean {
 }
 
 function computeReadinessScore(entity: Entity): number {
-  const MAX_RAW = 12.5;
   let raw = 0;
 
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-  if (owners.length > 0) raw += 1;
-  if (entity.kind) raw += 0.5;
-  if (entity.spec?.type) raw += 0.5;
-  if (entity.metadata?.description) raw += 1;
+  if (owners.length > 0) raw += 1.5;
+  if (entity.metadata?.description) raw += 1.5;
   if (entity.spec?.lifecycle) raw += 1;
   const systems = getEntityRelations(entity, RELATION_PART_OF, {
     kind: 'system',
   });
-  if (systems.length > 0) raw += 1;
+  if (systems.length > 0) raw += 1.5;
   if ((entity.metadata?.tags ?? []).length > 0) raw += 0.5;
 
-  const hasSourceLocation = !!(
-    entity.metadata?.annotations?.['backstage.io/source-location'] ||
-    entity.metadata?.annotations?.['backstage.io/managed-by-location']
-  );
-  if (hasSourceLocation) raw += 3;
+  const sourceLocation =
+    entity.metadata?.annotations?.['backstage.io/source-location'];
+  if (sourceLocation && sourceLocation.startsWith('url:')) raw += 1.5;
 
   const hasTechdocs = !!(
     entity.metadata?.annotations?.[TECHDOCS_ANNOTATION] ||
@@ -89,9 +84,9 @@ function computeReadinessScore(entity: Entity): number {
   );
   if (hasTechdocs) raw += 1;
 
-  if (isDataFresh(entity.metadata.name)) raw += 3;
+  if (isDataFresh(entity.metadata.name)) raw += 1.5;
 
-  return Math.round((raw / MAX_RAW) * 10 * 10) / 10;
+  return Math.round(raw * 10) / 10;
 }
 
 function scoreColor(score: number): string {
