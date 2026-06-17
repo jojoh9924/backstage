@@ -37,6 +37,7 @@ import {
   TableColumn,
   TableProps,
 } from '@backstage/core-components';
+import MuiButton from '@material-ui/core/Button';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { notificationsTranslationRef } from '../../translation';
 
@@ -207,19 +208,33 @@ export const NotificationsTable = ({
                 <Text variant="body-medium">
                   {notification.payload.title}
                   {notification.payload.link && (
-                    <>
-                      {' '}
-                      <Link
-                        to={notification.payload.link}
-                        onClick={() => {
-                          if (markAsReadOnLinkOpen && !notification.read) {
-                            onSwitchReadStatus([notification.id], true);
-                          }
-                        }}
-                      >
-                        View details
-                      </Link>
-                    </>
+                    <MuiButton
+                      component={Link}
+                      to={notification.payload.link}
+                      onClick={() => {
+                        if (markAsReadOnLinkOpen && !notification.read) {
+                          onSwitchReadStatus([notification.id], true);
+                        }
+                      }}
+                      variant="outlined"
+                      size="small"
+                      style={{
+                        marginTop: 1,
+                        marginLeft: 4,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.6rem',
+                        borderColor: 'rgba(0,0,0,0.25)',
+                        color: '#000',
+                        display: 'inline-block',
+                        width: 'auto',
+                        padding: '1px 8px',
+                        minHeight: 0,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      View Insights →
+                    </MuiButton>
                   )}
                 </Text>
                 {notification.payload.description ? (

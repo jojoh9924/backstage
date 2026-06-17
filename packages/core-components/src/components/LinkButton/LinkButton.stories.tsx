@@ -108,7 +108,7 @@ export const Default = () => {
         </ListItemText>
 
         <LinkButton to={link()} color="default" variant="outlined">
-          View Details
+          View Insights
         </LinkButton>
       </ListItem>
     </List>

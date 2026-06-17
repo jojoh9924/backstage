@@ -66,6 +66,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import MuiButton from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import styles from './NotificationsSideBarItem.module.css';
 
@@ -570,19 +571,29 @@ export const NotificationsSidebarItem = (
                           <Typography className={popoverClasses.title}>
                             {n.payload.title}
                             {n.payload.link && (
-                              <>
-                                {' '}
-                                <Link
-                                  to={n.payload.link}
-                                  onClick={() => setPopoverOpen(false)}
-                                  style={{
-                                    fontSize: 'inherit',
-                                    color: '#1976d2',
-                                  }}
-                                >
-                                  View details
-                                </Link>
-                              </>
+                              <MuiButton
+                                component={Link}
+                                to={n.payload.link}
+                                onClick={() => setPopoverOpen(false)}
+                                variant="outlined"
+                                size="small"
+                                style={{
+                                  marginTop: 2,
+                                  marginLeft: 4,
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  fontSize: '0.6rem',
+                                  borderColor: 'rgba(0,0,0,0.25)',
+                                  color: '#000',
+                                  display: 'inline-block',
+                                  width: 'auto',
+                                  padding: '1px 8px',
+                                  minHeight: 0,
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                View Insights →
+                              </MuiButton>
                             )}
                           </Typography>
                         }
