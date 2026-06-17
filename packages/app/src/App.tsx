@@ -51,6 +51,9 @@ import { convertLegacyEntityContentExtension } from '@backstage/plugin-catalog-r
 import { pluginInfoResolver } from './pluginInfoResolver';
 import { appModuleNav } from './modules/appModuleNav';
 import { appModuleScaffolder } from './modules/appModuleScaffolder';
+import { appModuleIcons } from './modules/appModuleIcons';
+import { adoptionInsightsPlugin } from './modules/adoptionInsightsPlugin';
+import { engineeringInsightsPlugin } from './modules/engineeringInsightsPlugin';
 import catalogPlugin from '@backstage/plugin-catalog/alpha';
 import InfoIcon from '@material-ui/icons/Info';
 
@@ -142,6 +145,9 @@ const app = createApp({
     notFoundErrorPageModule,
     appModuleNav,
     appModuleScaffolder,
+    appModuleIcons,
+    adoptionInsightsPlugin,
+    engineeringInsightsPlugin,
     customHomePageModule,
     ...collectedLegacyPlugins,
   ],

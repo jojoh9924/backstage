@@ -1,0 +1,193 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-nodejs-service
+  title: Create Node.js Microservice
+  description: Scaffold a production-ready Node.js microservice with CI/CD pipeline, container build, observability, and catalog registration.
+  tags:
+    - node
+    - typescript
+    - microservice
+    - recommended
+  annotations:
+    rhdh.redhat.com/time-saved: '18 hours'
+spec:
+  owner: group:default/platform-engineering
+  type: service
+  lifecycle: production
+
+  parameters:
+    - title: Service Details
+      required:
+        - name
+        - owner
+        - system
+      properties:
+        name:
+          title: Service Name
+          type: string
+          description: Unique name for the microservice (lowercase, hyphens only)
+          ui:autofocus: true
+          pattern: '^[a-z][a-z0-9-]*$'
+        description:
+          title: Description
+          type: string
+          description: What does this service do?
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        owner:
+          title: Owner
+          type: string
+          description: Team that owns this service
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group]
+        system:
+          title: System
+          type: string
+          description: System this service belongs to
+          enum:
+            - order-management
+            - payments
+            - identity
+            - notifications
+            - search-platform
+          enumNames:
+            - Order Management
+            - Payments
+            - Identity & Auth
+            - Notifications
+            - Search Platform
+
+    - title: Technical Configuration
+      required:
+        - nodeVersion
+        - port
+      properties:
+        nodeVersion:
+          title: Node.js Version
+          type: string
+          description: Runtime version for the service
+          enum:
+            - '22'
+            - '20'
+          default: '22'
+        port:
+          title: Service Port
+          type: integer
+          description: Port the HTTP server listens on
+          default: 3000
+          minimum: 1024
+          maximum: 65535
+        database:
+          title: Database
+          type: string
+          description: Primary data store (optional)
+          enum:
+            - none
+            - postgresql
+            - mongodb
+            - redis
+          default: none
+          enumNames:
+            - None
+            - PostgreSQL
+            - MongoDB
+            - Redis
+        enableMetrics:
+          title: Enable Prometheus Metrics
+          type: boolean
+          default: true
+        enableTracing:
+          title: Enable OpenTelemetry Tracing
+          type: boolean
+          default: true
+
+    - title: Repository & CI/CD
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+        ci:
+          title: CI/CD Pipeline
+          type: string
+          enum:
+            - github-actions
+            - tekton
+            - jenkins
+          default: github-actions
+          enumNames:
+            - GitHub Actions
+            - Tekton Pipelines
+            - Jenkins
+        deployTarget:
+          title: Deployment Target
+          type: string
+          enum:
+            - kubernetes
+            - openshift
+            - ecs
+          default: kubernetes
+          enumNames:
+            - Kubernetes
+            - OpenShift
+            - AWS ECS
+
+  steps:
+    - id: log-inputs
+      name: Validating configuration
+      action: debug:log
+      input:
+        message: |
+          Creating Node.js microservice "${{ parameters.name }}"
+          Owner: ${{ parameters.owner }}
+          System: ${{ parameters.system }}
+          Node.js: ${{ parameters.nodeVersion }}
+          Port: ${{ parameters.port }}
+          Database: ${{ parameters.database }}
+          CI: ${{ parameters.ci }}
+          Deploy target: ${{ parameters.deployTarget }}
+
+    - id: log-scaffold
+      name: Generating project files
+      action: debug:log
+      input:
+        message: Scaffolded service skeleton, Dockerfile, Helm chart, CI pipeline, and catalog-info.yaml
+
+    - id: log-repo
+      name: Publishing to repository
+      action: debug:log
+      input:
+        message: Pushed initial commit to ${{ parameters.repoUrl }}
+
+    - id: log-register
+      name: Registering in catalog
+      action: debug:log
+      input:
+        message: Registered ${{ parameters.name }} in Backstage catalog
+
+  output:
+    links:
+      - title: Open Repository
+        icon: github
+        url: https://github.com/example/${{ parameters.name }}
+      - title: View in Catalog
+        icon: catalog
+        url: /catalog/default/component/${{ parameters.name }}
+    text:
+      - title: Next Steps
+        content: |
+          **${{ parameters.name }}** has been created.
+
+          - Repository scaffolded with Node.js ${{ parameters.nodeVersion }} boilerplate
+          - ${{ parameters.ci }} pipeline configured
+          - Deployment manifests generated for ${{ parameters.deployTarget }}
+          - Component registered in the Backstage catalog

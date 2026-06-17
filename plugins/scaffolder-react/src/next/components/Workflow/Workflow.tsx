@@ -32,10 +32,13 @@ import { SecretsContextProvider } from '../../../secrets/SecretsContext';
 import { scaffolderReactTranslationRef } from '../../../translation';
 import { useFilteredSchemaProperties } from '../../hooks/useFilteredSchemaProperties';
 import { useTemplateParameterSchema } from '../../hooks/useTemplateParameterSchema';
-import { useTemplateTimeSavedMinutes } from '../../hooks/useTemplateTimeSaved';
+import {
+  useTemplateTimeSavedMinutes,
+  useTemplateTimeSavedLabel,
+} from '../../hooks/useTemplateTimeSaved';
 import { Stepper, type StepperProps } from '../Stepper/Stepper';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   markdown: {
     /** to make the styles for React Markdown not leak into the description */
     '& :first-child': {
@@ -45,7 +48,25 @@ const useStyles = makeStyles({
       marginBottom: 0,
     },
   },
-});
+  timeSavedBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 10px',
+    borderRadius: 4,
+    backgroundColor: theme.palette.grey[800],
+    color: theme.palette.common.white,
+    fontSize: 12,
+    fontWeight: 500,
+    lineHeight: 1.3,
+    whiteSpace: 'nowrap' as const,
+  },
+  timeSavedIcon: {
+    width: 14,
+    height: 14,
+    flexShrink: 0,
+  },
+}));
 
 /**
  * @alpha
@@ -92,6 +113,7 @@ export const Workflow = (workflowProps: WorkflowProps): JSX.Element | null => {
   const sortedManifest = useFilteredSchemaProperties(manifest);
 
   const minutesSaved = useTemplateTimeSavedMinutes(templateRef);
+  const timeSavedLabel = useTemplateTimeSavedLabel(templateRef);
 
   const workflowOnCreate = useCallback(
     async (formState: Record<string, JsonValue>) => {
@@ -133,6 +155,26 @@ export const Workflow = (workflowProps: WorkflowProps): JSX.Element | null => {
                 t('workflow.noDescription')
               }
             />
+          }
+          action={
+            timeSavedLabel ? (
+              <span className={styles.timeSavedBadge}>
+                <svg
+                  className={styles.timeSavedIcon}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                Est. time saved: {timeSavedLabel}
+              </span>
+            ) : undefined
           }
           noPadding
           titleTypographyProps={{ component: 'h2' }}

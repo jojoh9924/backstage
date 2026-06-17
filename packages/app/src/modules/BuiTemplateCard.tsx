@@ -36,6 +36,34 @@ import type { TemplateCardComponentProps } from '@backstage/plugin-scaffolder-re
 import styles from './BuiTemplateCard.module.css';
 
 const MAX_TAGS = 4;
+const TIME_SAVED_ANNOTATION = 'rhdh.redhat.com/time-saved';
+
+const DEFAULT_TIME_SAVED: Record<string, string> = {
+  service: '8 hours',
+  website: '4 hours',
+  library: '3 hours',
+  documentation: '2 hours',
+};
+const FALLBACK_TIME_SAVED = '5 hours';
+
+function ClockIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
 
 export function BuiTemplateCard(props: TemplateCardComponentProps) {
   const { template, onSelected } = props;
@@ -43,8 +71,13 @@ export function BuiTemplateCard(props: TemplateCardComponentProps) {
 
   const {
     spec: { type },
-    metadata: { tags, description, name, title },
+    metadata: { tags, description, name, title, annotations },
   } = template;
+
+  const timeSaved =
+    annotations?.[TIME_SAVED_ANNOTATION] ??
+    DEFAULT_TIME_SAVED[type] ??
+    FALLBACK_TIME_SAVED;
 
   const visibleTags = useMemo(
     () =>
@@ -64,6 +97,10 @@ export function BuiTemplateCard(props: TemplateCardComponentProps) {
 
   return (
     <Card className={styles.templateCard}>
+      <span className={styles.timeSavedBadge}>
+        <ClockIcon />
+        Est. time saved: {timeSaved}
+      </span>
       <CardHeader>
         <Text
           as="h3"

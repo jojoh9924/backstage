@@ -34,11 +34,33 @@ import { LinksGridList } from '../EntityLinksCard/LinksGridList';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { catalogTranslationRef } from '../../alpha/translation';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   description: {
     wordBreak: 'break-word',
   },
-});
+  addBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '3px 7px',
+    fontSize: '0.6rem',
+    fontWeight: theme.typography.fontWeightBold,
+    textTransform: 'none',
+    letterSpacing: 0.1,
+    color: theme.palette.primary.main,
+    background: 'none',
+    border: `1px solid ${theme.palette.primary.main}`,
+    borderRadius: 12,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    marginTop: 4,
+    textDecoration: 'none',
+    '&:hover': {
+      backgroundColor: 'rgba(21, 101, 192, 0.06)',
+      textDecoration: 'none',
+    },
+  },
+}));
 
 /**
  * Props for {@link AboutContent}.
@@ -47,6 +69,7 @@ const useStyles = makeStyles({
  */
 export interface AboutContentProps {
   entity: Entity;
+  editUrl?: string;
 }
 
 function getLocationTargetHref(
@@ -75,7 +98,7 @@ function getLocationTargetHref(
 
 /** @public */
 export function AboutContent(props: AboutContentProps) {
-  const { entity } = props;
+  const { entity, editUrl } = props;
   const classes = useStyles();
   const { t } = useTranslationRef(catalogTranslationRef);
 
@@ -101,6 +124,32 @@ export function AboutContent(props: AboutContentProps) {
     kind: 'domain',
   });
   const ownedByRelations = getEntityRelations(entity, RELATION_OWNED_BY);
+  const isTeamA = ownedByRelations.some(ref => ref.name === 'team-a');
+
+  function renderFieldWithFallback(
+    relations: { kind: string; namespace: string; name: string }[],
+    defaultKind: string,
+    addLabel: string,
+  ) {
+    if (relations.length > 0) {
+      return (
+        <EntityRefLinks entityRefs={relations} defaultKind={defaultKind} />
+      );
+    }
+    if (isTeamA && editUrl) {
+      return (
+        <a
+          href={editUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={classes.addBtn}
+        >
+          {addLabel}
+        </a>
+      );
+    }
+    return undefined;
+  }
 
   let entitySourceLocation:
     | {
@@ -134,20 +183,17 @@ export function AboutContent(props: AboutContentProps) {
         value={t('aboutCard.ownerField.value')}
         className={classes.description}
       >
-        {ownedByRelations.length > 0 && (
-          <EntityRefLinks entityRefs={ownedByRelations} defaultKind="group" />
-        )}
+        {renderFieldWithFallback(ownedByRelations, 'group', 'Add owner')}
       </AboutField>
       {(isSystem || partOfDomainRelations.length > 0) && (
         <AboutField
           label={t('aboutCard.domainField.label')}
           value={t('aboutCard.domainField.value')}
         >
-          {partOfDomainRelations.length > 0 && (
-            <EntityRefLinks
-              entityRefs={partOfDomainRelations}
-              defaultKind="domain"
-            />
+          {renderFieldWithFallback(
+            partOfDomainRelations,
+            'domain',
+            'Add domain',
           )}
         </AboutField>
       )}
@@ -159,11 +205,10 @@ export function AboutContent(props: AboutContentProps) {
           label={t('aboutCard.systemField.label')}
           value={t('aboutCard.systemField.value')}
         >
-          {partOfSystemRelations.length > 0 && (
-            <EntityRefLinks
-              entityRefs={partOfSystemRelations}
-              defaultKind="system"
-            />
+          {renderFieldWithFallback(
+            partOfSystemRelations,
+            'system',
+            'Add system',
           )}
         </AboutField>
       )}
@@ -182,9 +227,25 @@ export function AboutContent(props: AboutContentProps) {
         label={t('aboutCard.tagsField.label')}
         value={t('aboutCard.tagsField.value')}
       >
-        {(entity?.metadata?.tags || []).map(tag => (
-          <Chip key={tag} size="small" label={tag} />
-        ))}
+        {(() => {
+          const tags = entity?.metadata?.tags || [];
+          if (tags.length > 0) {
+            return tags.map(tag => <Chip key={tag} size="small" label={tag} />);
+          }
+          if (isTeamA && editUrl) {
+            return (
+              <a
+                href={editUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={classes.addBtn}
+              >
+                Add tags
+              </a>
+            );
+          }
+          return undefined;
+        })()}
       </AboutField>
       <AboutField label={t('aboutCard.kindField.label')} value={entity.kind} />
       {(isAPI ||

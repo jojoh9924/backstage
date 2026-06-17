@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNotificationsApi } from '../../hooks';
 import { SidebarItem } from '@backstage/core-components';
-import { IconComponent, useApi, useRouteRef } from '@backstage/core-plugin-api';
+import {
+  IconComponent,
+  useApi,
+  useApp,
+  useRouteRef,
+} from '@backstage/core-plugin-api';
 import { toastApiRef } from '@backstage/frontend-plugin-api';
 import { rootRouteRef } from '../../routes';
 import { useSignal } from '@backstage/plugin-signals-react';
@@ -44,7 +56,63 @@ import {
   RiCheckboxCircleLine,
   RiNotification2Line,
 } from '@remixicon/react';
+import { Link } from 'react-router-dom';
+import Popper from '@material-ui/core/Popper';
+import Paper from '@material-ui/core/Paper';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import { makeStyles } from '@material-ui/core/styles';
 import styles from './NotificationsSideBarItem.module.css';
+
+const usePopoverStyles = makeStyles(theme => ({
+  popper: {
+    zIndex: theme.zIndex.tooltip,
+    marginLeft: theme.spacing(1),
+  },
+  paper: {
+    width: 340,
+    maxHeight: 380,
+    overflow: 'auto',
+    boxShadow: theme.shadows[8],
+  },
+  header: {
+    padding: theme.spacing(1.5, 2),
+    fontWeight: 600,
+  },
+  listItem: {
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+    cursor: 'pointer',
+    textDecoration: 'none',
+    color: 'inherit',
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
+  },
+  listIcon: {
+    minWidth: 32,
+    color: theme.palette.text.secondary,
+  },
+  title: {
+    fontSize: '0.84rem',
+    lineHeight: 1.4,
+  },
+  timestamp: {
+    fontSize: '0.72rem',
+    color: theme.palette.text.secondary,
+    marginTop: 2,
+  },
+  empty: {
+    padding: theme.spacing(3),
+    textAlign: 'center' as const,
+    color: theme.palette.text.secondary,
+  },
+}));
 
 const NotificationsIcon: IconComponent = props => {
   let size = 24;
@@ -173,6 +241,7 @@ export const NotificationsSidebarItem = (
   const toastApi = useApi(toastApiRef);
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationsRoute = useRouteRef(rootRouteRef)();
+  const app = useApp();
   // TODO: Do we want to add long polling in case signals are not available
   const { lastSignal } = useSignal<NotificationSignal>('notifications');
   const { sendWebNotification, requestUserPermission } = useWebNotifications(
@@ -335,6 +404,68 @@ export const NotificationsSidebarItem = (
     [unreadCount, notificationsRoute, handleClick],
   );
 
+  const popoverClasses = usePopoverStyles();
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const [recentNotifications, setRecentNotifications] = useState<
+    Notification[]
+  >([]);
+
+  const fetchRecent = useCallback(() => {
+    notificationsApi
+      .getNotifications({ limit: 5 })
+      .then(res => {
+        const items = (res as any).notifications ?? [];
+        setRecentNotifications(items);
+      })
+      .catch(() => {});
+  }, [notificationsApi]);
+
+  useEffect(() => {
+    fetchRecent();
+  }, [fetchRecent, unreadCount]);
+
+  const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  const cancelClose = useCallback(() => {
+    if (closeTimeout.current) {
+      clearTimeout(closeTimeout.current);
+      closeTimeout.current = undefined;
+    }
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    cancelClose();
+    closeTimeout.current = setTimeout(() => setPopoverOpen(false), 200);
+  }, [cancelClose]);
+
+  const handleMouseEnter = useCallback(() => {
+    cancelClose();
+    hoverTimeout.current = setTimeout(() => {
+      fetchRecent();
+      setPopoverOpen(true);
+    }, 250);
+  }, [fetchRecent, cancelClose]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    scheduleClose();
+  }, [scheduleClose]);
+
+  const formatTime = (date: Date) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+  };
+
   return (
     <>
       {snackbarEnabled && (
@@ -370,23 +501,105 @@ export const NotificationsSidebarItem = (
           }}
         />
       )}
-      {props?.renderItem ? (
-        props.renderItem(renderItemProps)
-      ) : (
-        <SidebarItem
-          to={notificationsRoute}
-          onClick={handleClick}
-          text={text}
-          icon={icon}
-          {...restProps}
-        >
-          {count && (
-            <TagGroup aria-label="Unread notifications">
-              <Tag size="small">{count > 99 ? '99+' : count}</Tag>
-            </TagGroup>
-          )}
-        </SidebarItem>
-      )}
+      <div
+        ref={anchorRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {props?.renderItem ? (
+          props.renderItem(renderItemProps)
+        ) : (
+          <SidebarItem
+            to={notificationsRoute}
+            onClick={handleClick}
+            text={text}
+            icon={icon}
+            {...restProps}
+          >
+            {count && (
+              <TagGroup aria-label="Unread notifications">
+                <Tag size="small">{count > 99 ? '99+' : count}</Tag>
+              </TagGroup>
+            )}
+          </SidebarItem>
+        )}
+      </div>
+      <Popper
+        open={popoverOpen}
+        anchorEl={anchorRef.current}
+        placement="right"
+        className={popoverClasses.popper}
+      >
+        <ClickAwayListener onClickAway={() => setPopoverOpen(false)}>
+          <Paper
+            className={popoverClasses.paper}
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
+          >
+            <Typography className={popoverClasses.header} variant="subtitle2">
+              Recent Notifications
+            </Typography>
+            <Divider />
+            {recentNotifications.length === 0 ? (
+              <Typography className={popoverClasses.empty} variant="body2">
+                No notifications
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {recentNotifications.map(n => {
+                  const BadgeIcon = app.getSystemIcon(
+                    n.payload.icon ?? 'notification',
+                  );
+                  return (
+                    <ListItem
+                      key={n.id}
+                      className={popoverClasses.listItem}
+                      divider
+                      component={Link}
+                      to={notificationsRoute}
+                      onClick={() => setPopoverOpen(false)}
+                    >
+                      {BadgeIcon && (
+                        <ListItemIcon className={popoverClasses.listIcon}>
+                          <BadgeIcon fontSize="small" />
+                        </ListItemIcon>
+                      )}
+                      <ListItemText
+                        disableTypography
+                        primary={
+                          <Typography className={popoverClasses.title}>
+                            {n.payload.title}
+                            {n.payload.link && (
+                              <>
+                                {' '}
+                                <Link
+                                  to={n.payload.link}
+                                  onClick={() => setPopoverOpen(false)}
+                                  style={{
+                                    fontSize: 'inherit',
+                                    color: '#1976d2',
+                                  }}
+                                >
+                                  View details
+                                </Link>
+                              </>
+                            )}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography className={popoverClasses.timestamp}>
+                            {formatTime(n.created)}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Paper>
+        </ClickAwayListener>
+      </Popper>
     </>
   );
 };

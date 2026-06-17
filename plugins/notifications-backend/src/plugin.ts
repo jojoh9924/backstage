@@ -108,6 +108,48 @@ export const notificationsPlugin = createBackendPlugin({
       }) {
         const store = await DatabaseNotificationsStore.create({ database });
 
+        const db = await database.getClient();
+        const obsoleteIds = [
+          'demo-time-saved-team-v1',
+          'demo-time-saved-team-v2',
+          'demo-time-saved-personal-v4',
+        ];
+        for (const oldId of obsoleteIds) {
+          await db('notification').where('id', oldId).delete();
+        }
+
+        const demoBroadcasts = [
+          {
+            id: 'demo-broadcast-personal-v1',
+            title:
+              'You completed 5 self-service actions this month, saving an estimated 30 hours of time.',
+          },
+          {
+            id: 'demo-broadcast-team-v1',
+            title:
+              'Your team Red Hat Desktop completed 24 self-service actions this month, saving an estimated 5 days of time.',
+            link: '/engineering-insights',
+          },
+        ];
+        for (const n of demoBroadcasts) {
+          const exists = await db('broadcast').where('id', n.id).first();
+          if (!exists) {
+            await store.saveBroadcast({
+              id: n.id,
+              user: null,
+              created: new Date(),
+              origin: 'scaffolder',
+              payload: {
+                title: n.title,
+                severity: 'normal',
+                topic: 'scaffolder',
+                icon: 'badge',
+                ...('link' in n && n.link ? { link: n.link } : {}),
+              },
+            });
+          }
+        }
+
         httpRouter.use(
           await createRouter({
             auth,

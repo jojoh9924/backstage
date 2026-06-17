@@ -17,12 +17,17 @@
 import { ReactElement, PropsWithChildren } from 'react';
 import { Route, Routes, useRoutes } from 'react-router-dom';
 
-import { Entity } from '@backstage/catalog-model';
+import {
+  Entity,
+  RELATION_OWNED_BY,
+  ANNOTATION_EDIT_URL,
+} from '@backstage/catalog-model';
 import { EntityPageDocs } from './EntityPageDocs';
 import { TechDocsIndexPage } from './home/components/TechDocsIndexPage';
 import { TechDocsReaderPage } from './reader/components/TechDocsReaderPage';
 import {
   useEntity,
+  getEntityRelations,
   MissingAnnotationEmptyState,
 } from '@backstage/plugin-catalog-react';
 import {
@@ -104,9 +109,41 @@ export const EmbeddedDocsRouter = (
     entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION];
 
   if (!projectId) {
+    const owners = getEntityRelations(entity, RELATION_OWNED_BY);
+    const isTeamA = owners.some(ref => ref.name === 'team-a');
+    const editUrl = entity.metadata.annotations?.[ANNOTATION_EDIT_URL];
+
+    const connectButton =
+      isTeamA && editUrl ? (
+        <a
+          href={editUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '6px 16px',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: '#1565c0',
+            background: 'none',
+            border: '1.5px solid #1565c0',
+            borderRadius: 20,
+            textDecoration: 'none',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Connect TechDocs
+        </a>
+      ) : undefined;
+
     return (
       emptyState ?? (
-        <MissingAnnotationEmptyState annotation={[TECHDOCS_ANNOTATION]} />
+        <MissingAnnotationEmptyState
+          annotation={[TECHDOCS_ANNOTATION]}
+          titleAction={connectButton}
+        />
       )
     );
   }

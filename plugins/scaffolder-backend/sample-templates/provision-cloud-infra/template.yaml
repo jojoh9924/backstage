@@ -1,0 +1,193 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: provision-cloud-infra
+  title: Provision Cloud Infrastructure
+  description: Request and provision cloud infrastructure resources via Terraform, including databases, caches, message queues, and object storage with guardrails applied.
+  tags:
+    - infrastructure
+    - terraform
+    - cloud
+    - self-service
+  annotations:
+    rhdh.redhat.com/time-saved: '25 hours'
+spec:
+  owner: group:default/cloud-platform
+  type: resource
+  lifecycle: production
+
+  parameters:
+    - title: Infrastructure Request
+      required:
+        - name
+        - owner
+        - environment
+      properties:
+        name:
+          title: Resource Name
+          type: string
+          description: Identifier for this infrastructure stack
+          ui:autofocus: true
+          pattern: '^[a-z][a-z0-9-]*$'
+        owner:
+          title: Requesting Team
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group]
+        environment:
+          title: Environment
+          type: string
+          enum:
+            - development
+            - staging
+            - production
+          default: development
+        cloudProvider:
+          title: Cloud Provider
+          type: string
+          enum:
+            - aws
+            - gcp
+            - azure
+          default: aws
+          enumNames:
+            - Amazon Web Services
+            - Google Cloud Platform
+            - Microsoft Azure
+        region:
+          title: Region
+          type: string
+          enum:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+            - ap-southeast-1
+          default: us-east-1
+
+    - title: Resources
+      properties:
+        resources:
+          title: Resources to Provision
+          description: Select the cloud resources you need
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - rds-postgresql
+              - elasticache-redis
+              - sqs-queue
+              - sns-topic
+              - s3-bucket
+              - dynamodb-table
+              - msk-kafka
+              - opensearch
+          ui:widget: checkboxes
+          default:
+            - rds-postgresql
+        dbInstanceClass:
+          title: Database Instance Size
+          type: string
+          enum:
+            - db.t3.micro
+            - db.t3.small
+            - db.t3.medium
+            - db.r6g.large
+            - db.r6g.xlarge
+          default: db.t3.small
+          description: Only applies if a database is selected
+        cacheNodeType:
+          title: Cache Node Size
+          type: string
+          enum:
+            - cache.t3.micro
+            - cache.t3.small
+            - cache.t3.medium
+            - cache.r6g.large
+          default: cache.t3.micro
+          description: Only applies if Redis cache is selected
+
+    - title: Security & Compliance
+      properties:
+        encryption:
+          title: Encryption at Rest
+          type: boolean
+          default: true
+          description: Encrypt all data stores with KMS (required for production)
+        backupRetention:
+          title: Backup Retention (days)
+          type: integer
+          default: 7
+          minimum: 1
+          maximum: 35
+        networkPolicy:
+          title: Network Access
+          type: string
+          enum:
+            - private-only
+            - vpc-peered
+            - public-restricted
+          default: private-only
+          enumNames:
+            - Private (VPC only)
+            - VPC Peered (cross-account)
+            - Public with IP Restrictions
+        costCenter:
+          title: Cost Center
+          type: string
+          description: Finance cost center for billing allocation
+          pattern: '^CC-[0-9]{4,6}$'
+
+  steps:
+    - id: log-inputs
+      name: Validating infrastructure request
+      action: debug:log
+      input:
+        message: |
+          Infrastructure request "${{ parameters.name }}"
+          Environment: ${{ parameters.environment }}
+          Cloud: ${{ parameters.cloudProvider }} / ${{ parameters.region }}
+          Resources: ${{ parameters.resources }}
+
+    - id: log-guardrails
+      name: Applying security guardrails
+      action: debug:log
+      input:
+        message: Validated against organization policies — encryption, network, and compliance checks passed
+
+    - id: log-terraform
+      name: Generating Terraform modules
+      action: debug:log
+      input:
+        message: Generated Terraform HCL for requested resources with tagging and monitoring
+
+    - id: log-plan
+      name: Running Terraform plan
+      action: debug:log
+      input:
+        message: 'Terraform plan: 12 resources to add, 0 to change, 0 to destroy'
+
+    - id: log-apply
+      name: Applying infrastructure
+      action: debug:log
+      input:
+        message: Infrastructure provisioned successfully in ${{ parameters.region }}
+
+  output:
+    links:
+      - title: View Terraform State
+        url: https://app.terraform.io/app/example/workspaces/${{ parameters.name }}
+      - title: View in Catalog
+        icon: catalog
+        url: /catalog/default/resource/${{ parameters.name }}
+    text:
+      - title: Provisioned Resources
+        content: |
+          **${{ parameters.name }}** infrastructure is ready.
+
+          - Cloud: ${{ parameters.cloudProvider }} / ${{ parameters.region }}
+          - Environment: ${{ parameters.environment }}
+          - Connection strings and credentials have been stored in Vault
+          - Monitoring dashboards created in Grafana

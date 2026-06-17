@@ -4,6 +4,8 @@ metadata:
   name: bui-kitchen-sink-demo
   title: BUI Kitchen Sink Demo
   description: Exercises every widget and field extension in the BUI scaffolder form theme
+  annotations:
+    rhdh.redhat.com/time-saved: '3 hours'
 spec:
   owner: backstage/techdocs-core
   type: service

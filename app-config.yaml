@@ -334,6 +334,11 @@ catalog:
       target: ../../plugins/scaffolder-backend/sample-templates/all-templates.yaml
       rules:
         - allow: [Template]
+    # Mock Python API template
+    - type: file
+      target: ../../../templates/mock-python-api/template.yaml
+      rules:
+        - allow: [Template]
 
 scaffolder:
   auditor:

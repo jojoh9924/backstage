@@ -50,7 +50,8 @@ const useStyles = makeStyles(
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundImage: theme.page.backgroundImage,
+      backgroundImage: 'none',
+      backgroundColor: '#fff',
       backgroundPosition: 'center',
       backgroundSize: 'cover',
       [theme.breakpoints.down('sm')]: {
@@ -66,13 +67,13 @@ const useStyles = makeStyles(
       alignItems: 'center',
     },
     title: {
-      color: theme.page.fontColor,
+      color: '#000',
       wordBreak: 'break-word',
       fontSize: theme.typography.h3.fontSize,
       marginBottom: 0,
     },
     subtitle: {
-      color: theme.page.fontColor,
+      color: '#000',
       opacity: 0.8,
       display: 'inline-block', // prevents margin collapse of adjacent siblings
       marginTop: theme.spacing(1),
@@ -83,10 +84,10 @@ const useStyles = makeStyles(
       fontSize: 11,
       opacity: 0.8,
       marginBottom: theme.spacing(1),
-      color: theme.page.fontColor,
+      color: '#000',
     },
     breadcrumb: {
-      color: theme.page.fontColor,
+      color: '#000',
     },
     breadcrumbType: {
       fontSize: 'inherit',

@@ -1,0 +1,209 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: onboard-service
+  title: Onboard Service to Production
+  description: Prepare an existing service for production readiness — configure monitoring, alerting, SLOs, incident runbooks, and security scanning.
+  tags:
+    - onboarding
+    - production
+    - sre
+    - golden-path
+  annotations:
+    rhdh.redhat.com/time-saved: '30 hours'
+spec:
+  owner: group:default/sre-team
+  type: service
+  lifecycle: production
+
+  parameters:
+    - title: Service Information
+      required:
+        - componentRef
+        - owner
+        - tier
+      properties:
+        componentRef:
+          title: Service to Onboard
+          type: string
+          description: Select the existing catalog component to onboard
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: [Component]
+              spec.type: service
+        owner:
+          title: Service Owner
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group]
+        tier:
+          title: Service Tier
+          type: string
+          description: Criticality tier determines SLO targets and on-call requirements
+          enum:
+            - tier-1
+            - tier-2
+            - tier-3
+          enumNames:
+            - 'Tier 1 — Business Critical (99.95% SLO)'
+            - 'Tier 2 — Important (99.9% SLO)'
+            - 'Tier 3 — Internal (99.5% SLO)'
+          default: tier-2
+
+    - title: Observability
+      properties:
+        sloLatencyP99:
+          title: P99 Latency Target (ms)
+          type: integer
+          default: 500
+          minimum: 50
+          maximum: 5000
+          description: Maximum acceptable P99 response time
+        sloErrorBudget:
+          title: Monthly Error Budget (%)
+          type: number
+          default: 0.1
+          minimum: 0.01
+          maximum: 5.0
+          description: Percentage of requests that can fail per month
+        dashboards:
+          title: Monitoring Dashboards
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - golden-signals
+              - resource-utilization
+              - dependency-map
+              - database-performance
+              - business-metrics
+          ui:widget: checkboxes
+          default:
+            - golden-signals
+            - resource-utilization
+        alertChannels:
+          title: Alert Notification Channels
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - pagerduty
+              - slack
+              - email
+              - opsgenie
+          ui:widget: checkboxes
+          default:
+            - pagerduty
+            - slack
+
+    - title: Security & Compliance
+      properties:
+        securityScan:
+          title: Security Scanning
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - container-scanning
+              - dependency-audit
+              - sast
+              - dast
+              - secrets-detection
+          ui:widget: checkboxes
+          default:
+            - container-scanning
+            - dependency-audit
+            - secrets-detection
+        dataClassification:
+          title: Data Classification
+          type: string
+          enum:
+            - public
+            - internal
+            - confidential
+            - restricted
+          default: internal
+          enumNames:
+            - Public
+            - Internal
+            - Confidential
+            - Restricted (PII/PCI)
+        oncallSchedule:
+          title: On-Call Schedule
+          type: string
+          enum:
+            - 24x7
+            - business-hours
+            - best-effort
+          default: business-hours
+          enumNames:
+            - 24/7 Coverage
+            - Business Hours (M-F 9-6)
+            - Best Effort (no pager)
+
+  steps:
+    - id: log-inputs
+      name: Reviewing service configuration
+      action: debug:log
+      input:
+        message: |
+          Onboarding "${{ parameters.componentRef }}" to production
+          Tier: ${{ parameters.tier }}
+          P99 target: ${{ parameters.sloLatencyP99 }}ms
+          Error budget: ${{ parameters.sloErrorBudget }}%
+
+    - id: log-monitoring
+      name: Configuring monitoring & SLOs
+      action: debug:log
+      input:
+        message: Created Grafana dashboards, Prometheus recording rules, and SLO burn-rate alerts
+
+    - id: log-alerting
+      name: Setting up alerting
+      action: debug:log
+      input:
+        message: Configured alert routing to ${{ parameters.alertChannels }}
+
+    - id: log-security
+      name: Enabling security scanning
+      action: debug:log
+      input:
+        message: Enabled ${{ parameters.securityScan }} in CI pipeline
+
+    - id: log-runbook
+      name: Generating incident runbook
+      action: debug:log
+      input:
+        message: Generated runbook template with escalation paths and common failure modes
+
+    - id: log-checklist
+      name: Validating production readiness
+      action: debug:log
+      input:
+        message: 'Production readiness checklist: 14/14 items passed'
+
+  output:
+    links:
+      - title: Grafana Dashboard
+        url: https://grafana.example.com/d/${{ parameters.componentRef }}
+      - title: PagerDuty Service
+        url: https://example.pagerduty.com/services/${{ parameters.componentRef }}
+      - title: View in Catalog
+        icon: catalog
+        url: /catalog/default/component/${{ parameters.componentRef }}
+    text:
+      - title: Production Readiness Summary
+        content: |
+          **${{ parameters.componentRef }}** is production-ready.
+
+          - SLO: ${{ parameters.sloLatencyP99 }}ms P99 latency, ${{ parameters.sloErrorBudget }}% error budget
+          - Monitoring: Grafana dashboards and Prometheus alerts configured
+          - Security: Scanning enabled in CI pipeline
+          - On-call: ${{ parameters.oncallSchedule }} schedule configured
+          - Runbook published to TechDocs

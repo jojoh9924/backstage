@@ -46,6 +46,7 @@ const useIconStyles = makeStyles(
       justifyItems: 'center',
       gridGap: 4,
       textAlign: 'center',
+      overflow: 'visible',
     },
     disabled: {
       color: theme.palette.text.secondary,

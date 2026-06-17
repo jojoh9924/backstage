@@ -3,6 +3,8 @@ kind: Component
 metadata:
   name: wayback-search
   description: Search of the wayback machine
+  annotations:
+    backstage.io/edit-url: https://github.com/example/wayback-search/edit/main/catalog-info.yaml
 spec:
   type: service
   lifecycle: production

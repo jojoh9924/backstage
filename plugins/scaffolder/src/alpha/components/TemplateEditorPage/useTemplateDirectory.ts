@@ -23,13 +23,14 @@ import {
   WebDirectoryAccess,
   createExampleTemplate,
 } from '../../../lib/filesystem';
+import type { CreateExampleTemplateOptions } from '../../../lib/filesystem/createExampleTemplate';
 
 export function useTemplateDirectory(): {
   directory?: WebDirectoryAccess;
   loading: boolean;
   error?: Error;
   openDirectory: () => Promise<void>;
-  createDirectory: () => Promise<void>;
+  createDirectory: (options?: CreateExampleTemplateOptions) => Promise<void>;
   closeDirectory: () => Promise<void>;
 } {
   const { value, loading, error, retry } = useAsyncRetry(async () => {
@@ -44,12 +45,15 @@ export function useTemplateDirectory(): {
       .then(retry);
   }, [retry]);
 
-  const createDirectory = useCallback(() => {
-    return WebFileSystemAccess.requestDirectoryAccess()
-      .then(createExampleTemplate)
-      .then(WebFileSystemStore.setDirectory)
-      .then(retry);
-  }, [retry]);
+  const createDirectory = useCallback(
+    (options?: CreateExampleTemplateOptions) => {
+      return WebFileSystemAccess.requestDirectoryAccess()
+        .then(dir => createExampleTemplate(dir, options))
+        .then(WebFileSystemStore.setDirectory)
+        .then(retry);
+    },
+    [retry],
+  );
 
   const closeDirectory = useCallback(() => {
     return WebFileSystemStore.setDirectory(undefined).then(retry);

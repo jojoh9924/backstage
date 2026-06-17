@@ -37,6 +37,13 @@ import ListItemText from '@material-ui/core/ListItemText';
 import List from '@material-ui/core/List';
 import { useApi } from '@backstage/core-plugin-api';
 import { IconsApi, iconsApiRef } from '@backstage/frontend-plugin-api';
+import WarningIcon from '@material-ui/icons/Warning';
+import { RELATION_OWNED_BY } from '@backstage/catalog-model';
+import {
+  TECHDOCS_ANNOTATION,
+  TECHDOCS_EXTERNAL_ANNOTATION,
+} from '@backstage/plugin-techdocs-common';
+import { useEntity, getEntityRelations } from '@backstage/plugin-catalog-react';
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -174,9 +181,26 @@ function resolveIcon(
   return icon;
 }
 
+function useTechdocsAlert(): boolean {
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { entity } = useEntity();
+    const hasTechdocs = !!(
+      entity.metadata.annotations?.[TECHDOCS_ANNOTATION] ||
+      entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
+    );
+    const owners = getEntityRelations(entity, RELATION_OWNED_BY);
+    const isTeamA = owners.some(ref => ref.name === 'team-a');
+    return !hasTechdocs && isTeamA;
+  } catch {
+    return false;
+  }
+}
+
 const Tab = forwardRef(function Tab(props: EntityTabsGroupProps, ref: any) {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const iconsApi = useApi(iconsApiRef);
+  const showTechdocsAlert = useTechdocsAlert();
 
   const open = Boolean(anchorEl);
   const submenuId = open ? 'tabbed-submenu' : undefined;
@@ -244,6 +268,16 @@ const Tab = forwardRef(function Tab(props: EntityTabsGroupProps, ref: any) {
       >
         <Typography className={classes?.wrapper} variant="button">
           {items[0].label}
+          {showTechdocsAlert &&
+            items[0].label.toLowerCase().includes('techdoc') && (
+              <WarningIcon
+                style={{
+                  fontSize: '0.95rem',
+                  color: '#e5a000',
+                  marginLeft: 4,
+                }}
+              />
+            )}
         </Typography>
         {indicator}
       </Button>
@@ -311,7 +345,19 @@ const Tab = forwardRef(function Tab(props: EntityTabsGroupProps, ref: any) {
                   inset={!itemIcon && hasIcons}
                   primary={
                     <>
-                      <Typography variant="button">{i.label}</Typography>
+                      <Typography variant="button">
+                        {i.label}
+                        {showTechdocsAlert &&
+                          i.label.toLowerCase().includes('techdoc') && (
+                            <WarningIcon
+                              style={{
+                                fontSize: '0.95rem',
+                                color: '#e5a000',
+                                marginLeft: 4,
+                              }}
+                            />
+                          )}
+                      </Typography>
                       {indicator}
                     </>
                   }

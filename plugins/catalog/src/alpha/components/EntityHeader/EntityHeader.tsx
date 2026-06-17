@@ -99,13 +99,13 @@ function findParentRelation(
 
 const useStyles = makeStyles(theme => ({
   breadcrumbs: {
-    color: theme.page.fontColor,
+    color: '#000',
     fontSize: theme.typography.caption.fontSize,
     textTransform: 'uppercase',
     marginTop: theme.spacing(1),
     opacity: 0.8,
     '& span ': {
-      color: theme.page.fontColor,
+      color: '#000',
       textDecoration: 'underline',
       textUnderlineOffset: '3px',
     },

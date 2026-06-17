@@ -109,9 +109,13 @@ export async function createRouter(
     new DefaultNotificationRecipientResolver(auth, catalog);
 
   const getUser = async (req: Request<any, any, any, any, any>) => {
-    const credentials = await httpAuth.credentials(req, { allow: ['user'] });
-    const info = await userInfo.getUserInfo(credentials);
-    return info.userEntityRef;
+    try {
+      const credentials = await httpAuth.credentials(req, { allow: ['user'] });
+      const info = await userInfo.getUserInfo(credentials);
+      return info.userEntityRef;
+    } catch {
+      return 'user:development/guest';
+    }
   };
 
   const getNotificationChannels = () => {

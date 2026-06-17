@@ -15,6 +15,7 @@
  */
 
 import DocsIcon from '@material-ui/icons/Description';
+import WarningIcon from '@material-ui/icons/Warning';
 
 import { useRouteRef } from '@backstage/core-plugin-api';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
@@ -25,7 +26,8 @@ import {
 } from '@backstage/plugin-techdocs-common';
 import { buildTechDocsURL } from '@backstage/plugin-techdocs-react';
 
-import { useEntity } from '@backstage/plugin-catalog-react';
+import { RELATION_OWNED_BY } from '@backstage/catalog-model';
+import { useEntity, getEntityRelations } from '@backstage/plugin-catalog-react';
 
 import { techdocsTranslationRef } from '../../translation';
 import { rootDocsRouteRef } from '../../routes';
@@ -38,14 +40,42 @@ export function useTechdocsReaderIconLinkProps() {
   const viewTechdocLink = useRouteRef(rootDocsRouteRef);
   const { t } = useTranslationRef(techdocsTranslationRef);
 
+  const hasTechdocs = !!(
+    entity.metadata.annotations?.[TECHDOCS_ANNOTATION] ||
+    entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
+  );
+  const owners = getEntityRelations(entity, RELATION_OWNED_BY);
+  const isTeamA = owners.some(ref => ref.name === 'team-a');
+  const showAlert = !hasTechdocs && isTeamA;
+
+  const icon = showAlert ? (
+    <span
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        overflow: 'visible',
+      }}
+    >
+      <DocsIcon />
+      <WarningIcon
+        style={{
+          position: 'absolute',
+          top: -4,
+          right: -10,
+          fontSize: '0.9rem',
+          color: '#e5a000',
+          filter: 'drop-shadow(0 0 1px #fff)',
+        }}
+      />
+    </span>
+  ) : (
+    <DocsIcon />
+  );
+
   return {
     label: t('aboutCard.viewTechdocs'),
-    disabled:
-      !(
-        entity.metadata.annotations?.[TECHDOCS_ANNOTATION] ||
-        entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
-      ) || !viewTechdocLink,
-    icon: <DocsIcon />,
+    disabled: !hasTechdocs || !viewTechdocLink,
+    icon,
     href: buildTechDocsURL(entity, viewTechdocLink),
   };
 }

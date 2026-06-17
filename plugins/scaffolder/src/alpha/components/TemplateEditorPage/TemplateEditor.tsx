@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useRouteRef } from '@backstage/core-plugin-api';
@@ -43,6 +43,7 @@ import { TemplateEditorTextArea } from './TemplateEditorTextArea';
 import { TemplateEditorForm } from './TemplateEditorForm';
 import { DryRunProvider } from './DryRunContext';
 import { DryRunResults } from './DryRunResults';
+import { TimeSavedDialog } from './TimeSavedDialog';
 
 /** @public */
 export type ScaffolderTemplateEditorClassKey =
@@ -60,58 +61,84 @@ export const TemplateEditor = (props: {
 }) => {
   const { layouts, formProps, fieldExtensions } = props;
   const [errorText, setErrorText] = useState<string>();
+  const [timeSavedOpen, setTimeSavedOpen] = useState(false);
   const navigate = useNavigate();
   const editLink = useRouteRef(editRouteRef);
   const {
     directory,
     openDirectory: handleOpenDirectory,
-    createDirectory: handleCreateDirectory,
+    createDirectory,
     closeDirectory,
   } = useTemplateDirectory();
+
+  const handleRequestCreate = useCallback(() => {
+    setTimeSavedOpen(true);
+  }, []);
+
+  const handleTimeSavedConfirm = useCallback(
+    (timeSaved: string) => {
+      setTimeSavedOpen(false);
+      createDirectory({ timeSaved }).catch(() => {});
+    },
+    [createDirectory],
+  );
+
+  const handleTimeSavedCancel = useCallback(() => {
+    setTimeSavedOpen(false);
+  }, []);
 
   const handleCloseDirectory = useCallback(() => {
     closeDirectory().then(() => navigate(editLink()));
   }, [closeDirectory, navigate, editLink]);
 
   return (
-    <DirectoryEditorProvider directory={directory}>
-      <DryRunProvider>
-        <TemplateEditorLayout>
-          <TemplateEditorLayoutToolbar>
-            <TemplateEditorToolbar fieldExtensions={fieldExtensions}>
-              <TemplateEditorToolbarFileMenu
-                onOpenDirectory={handleOpenDirectory}
-                onCreateDirectory={handleCreateDirectory}
-                onCloseDirectory={handleCloseDirectory}
-              />
-            </TemplateEditorToolbar>
-          </TemplateEditorLayoutToolbar>
-          <TemplateEditorLayoutBrowser>
-            <TemplateEditorBrowser onClose={closeDirectory} />
-          </TemplateEditorLayoutBrowser>
-          <TemplateEditorPanels
-            autoSaveId="template-editor"
-            files={
-              <TemplateEditorLayoutFiles>
-                <TemplateEditorTextArea.DirectoryEditor errorText={errorText} />
-              </TemplateEditorLayoutFiles>
-            }
-            preview={
-              <TemplateEditorLayoutPreview>
-                <TemplateEditorForm.DirectoryEditorDryRun
-                  setErrorText={setErrorText}
-                  fieldExtensions={fieldExtensions}
-                  layouts={layouts}
-                  formProps={formProps}
+    <Fragment>
+      <DirectoryEditorProvider directory={directory}>
+        <DryRunProvider>
+          <TemplateEditorLayout>
+            <TemplateEditorLayoutToolbar>
+              <TemplateEditorToolbar fieldExtensions={fieldExtensions}>
+                <TemplateEditorToolbarFileMenu
+                  onOpenDirectory={handleOpenDirectory}
+                  onCreateDirectory={handleRequestCreate}
+                  onCloseDirectory={handleCloseDirectory}
                 />
-              </TemplateEditorLayoutPreview>
-            }
-          />
-          <TemplateEditorLayoutConsole>
-            <DryRunResults />
-          </TemplateEditorLayoutConsole>
-        </TemplateEditorLayout>
-      </DryRunProvider>
-    </DirectoryEditorProvider>
+              </TemplateEditorToolbar>
+            </TemplateEditorLayoutToolbar>
+            <TemplateEditorLayoutBrowser>
+              <TemplateEditorBrowser onClose={closeDirectory} />
+            </TemplateEditorLayoutBrowser>
+            <TemplateEditorPanels
+              autoSaveId="template-editor"
+              files={
+                <TemplateEditorLayoutFiles>
+                  <TemplateEditorTextArea.DirectoryEditor
+                    errorText={errorText}
+                  />
+                </TemplateEditorLayoutFiles>
+              }
+              preview={
+                <TemplateEditorLayoutPreview>
+                  <TemplateEditorForm.DirectoryEditorDryRun
+                    setErrorText={setErrorText}
+                    fieldExtensions={fieldExtensions}
+                    layouts={layouts}
+                    formProps={formProps}
+                  />
+                </TemplateEditorLayoutPreview>
+              }
+            />
+            <TemplateEditorLayoutConsole>
+              <DryRunResults />
+            </TemplateEditorLayoutConsole>
+          </TemplateEditorLayout>
+        </DryRunProvider>
+      </DirectoryEditorProvider>
+      <TimeSavedDialog
+        open={timeSavedOpen}
+        onConfirm={handleTimeSavedConfirm}
+        onCancel={handleTimeSavedCancel}
+      />
+    </Fragment>
   );
 };

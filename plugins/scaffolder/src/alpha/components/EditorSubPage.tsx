@@ -15,7 +15,7 @@
  */
 
 import { useAsync, useMountEffect } from '@react-hookz/web';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Content } from '@backstage/core-components';
 import { useApi } from '@backstage/core-plugin-api';
@@ -35,6 +35,7 @@ import { TemplateEditor } from './TemplateEditorPage/TemplateEditor';
 import { TemplateFormPreviewer } from './TemplateEditorPage/TemplateFormPreviewer';
 import { CustomFieldExplorer } from './TemplateEditorPage/CustomFieldExplorer';
 import { useTemplateDirectory } from './TemplateEditorPage/useTemplateDirectory';
+import { TimeSavedDialog } from './TemplateEditorPage/TimeSavedDialog';
 
 const useEditorStyles = makeStyles({
   editorContent: {
@@ -50,6 +51,7 @@ const useEditorStyles = makeStyles({
 function EditorIntroContent() {
   const navigate = useNavigate();
   const { openDirectory, createDirectory } = useTemplateDirectory();
+  const [timeSavedOpen, setTimeSavedOpen] = useState(false);
 
   const handleSelect = useCallback(
     (option: 'create-template' | 'local' | 'form' | 'field-explorer') => {
@@ -58,21 +60,38 @@ function EditorIntroContent() {
           .then(() => navigate('template'))
           .catch(() => {});
       } else if (option === 'create-template') {
-        createDirectory()
-          .then(() => navigate('template'))
-          .catch(() => {});
+        setTimeSavedOpen(true);
       } else if (option === 'form') {
         navigate('template-form');
       } else if (option === 'field-explorer') {
         navigate('custom-fields');
       }
     },
-    [openDirectory, createDirectory, navigate],
+    [openDirectory, navigate],
   );
+
+  const handleTimeSavedConfirm = useCallback(
+    (timeSaved: string) => {
+      setTimeSavedOpen(false);
+      createDirectory({ timeSaved })
+        .then(() => navigate('template'))
+        .catch(() => {});
+    },
+    [createDirectory, navigate],
+  );
+
+  const handleTimeSavedCancel = useCallback(() => {
+    setTimeSavedOpen(false);
+  }, []);
 
   return (
     <Content>
       <TemplateEditorIntro onSelect={handleSelect} />
+      <TimeSavedDialog
+        open={timeSavedOpen}
+        onConfirm={handleTimeSavedConfirm}
+        onCancel={handleTimeSavedCancel}
+      />
     </Content>
   );
 }

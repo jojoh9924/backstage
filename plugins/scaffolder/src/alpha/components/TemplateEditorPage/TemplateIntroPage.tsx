@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Content, Header, Page } from '@backstage/core-components';
 
 import { TemplateEditorIntro } from './TemplateEditorIntro';
@@ -28,6 +28,7 @@ import {
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { scaffolderTranslationRef } from '../../../translation';
 import { useTemplateDirectory } from './useTemplateDirectory';
+import { TimeSavedDialog } from './TimeSavedDialog';
 
 export function TemplateIntroPage() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export function TemplateIntroPage() {
   const customFieldsLink = useRouteRef(customFieldsRouteRef);
   const { t } = useTranslationRef(scaffolderTranslationRef);
   const { openDirectory, createDirectory } = useTemplateDirectory();
+  const [timeSavedOpen, setTimeSavedOpen] = useState(false);
 
   const handleSelect = useCallback(
     (option: 'create-template' | 'local' | 'form' | 'field-explorer') => {
@@ -45,24 +47,29 @@ export function TemplateIntroPage() {
           .then(() => navigate(editorLink()))
           .catch(() => {});
       } else if (option === 'create-template') {
-        createDirectory()
-          .then(() => navigate(editorLink()))
-          .catch(() => {});
+        setTimeSavedOpen(true);
       } else if (option === 'form') {
         navigate(templateFormLink());
       } else if (option === 'field-explorer') {
         navigate(customFieldsLink());
       }
     },
-    [
-      openDirectory,
-      createDirectory,
-      navigate,
-      editorLink,
-      templateFormLink,
-      customFieldsLink,
-    ],
+    [openDirectory, navigate, editorLink, templateFormLink, customFieldsLink],
   );
+
+  const handleTimeSavedConfirm = useCallback(
+    (timeSaved: string) => {
+      setTimeSavedOpen(false);
+      createDirectory({ timeSaved })
+        .then(() => navigate(editorLink()))
+        .catch(() => {});
+    },
+    [createDirectory, navigate, editorLink],
+  );
+
+  const handleTimeSavedCancel = useCallback(() => {
+    setTimeSavedOpen(false);
+  }, []);
 
   return (
     <Page themeId="home">
@@ -74,6 +81,11 @@ export function TemplateIntroPage() {
       />
       <Content>
         <TemplateEditorIntro onSelect={handleSelect} />
+        <TimeSavedDialog
+          open={timeSavedOpen}
+          onConfirm={handleTimeSavedConfirm}
+          onCancel={handleTimeSavedCancel}
+        />
       </Content>
     </Page>
   );

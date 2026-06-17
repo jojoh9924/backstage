@@ -44,7 +44,7 @@ const useStyles = makeStyles(
   (theme: Theme) => {
     return {
       button: {
-        color: theme.page.fontColor,
+        color: '#000',
       },
     };
   },

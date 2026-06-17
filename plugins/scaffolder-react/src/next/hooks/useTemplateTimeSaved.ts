@@ -19,6 +19,41 @@ import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import { Duration } from 'luxon';
 import useAsync from 'react-use/lib/useAsync';
 
+const RHDH_TIME_SAVED_ANNOTATION = 'rhdh.redhat.com/time-saved';
+
+const DEFAULT_TIME_SAVED: Record<string, string> = {
+  service: '8 hours',
+  website: '4 hours',
+  library: '3 hours',
+  documentation: '2 hours',
+};
+const FALLBACK_TIME_SAVED = '5 hours';
+
+/**
+ * Returns the human-readable time-saved label for a template, matching the
+ * format shown on template cards (e.g. "8 hours").
+ */
+export const useTemplateTimeSavedLabel = (templateRef: string) => {
+  const catalogApi = useApi(catalogApiRef);
+
+  const { value: label } = useAsync(async () => {
+    const entity = await catalogApi.getEntityByRef(templateRef);
+    if (!entity) return FALLBACK_TIME_SAVED;
+
+    const annotation =
+      entity.metadata.annotations?.[RHDH_TIME_SAVED_ANNOTATION];
+    const type = (entity as any).spec?.type as string | undefined;
+
+    return (
+      annotation ??
+      (type ? DEFAULT_TIME_SAVED[type] : undefined) ??
+      FALLBACK_TIME_SAVED
+    );
+  }, [catalogApi, templateRef]);
+
+  return label;
+};
+
 /**
  * Returns the backstage.io/time-saved annotation (as a number of minutes) for
  * a given template entity ref.

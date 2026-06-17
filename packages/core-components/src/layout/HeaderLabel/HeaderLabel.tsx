@@ -29,7 +29,7 @@ const useStyles = makeStyles(
       textAlign: 'left',
     },
     label: {
-      color: theme.page.fontColor,
+      color: '#000',
       fontWeight: theme.typography.fontWeightBold,
       letterSpacing: 0,
       fontSize: theme.typography.fontSize,
@@ -37,7 +37,7 @@ const useStyles = makeStyles(
       lineHeight: 1,
     },
     value: {
-      color: alpha(theme.page.fontColor, 0.8),
+      color: 'rgba(0,0,0,0.8)',
       fontSize: theme.typography.fontSize,
       lineHeight: 1,
     },

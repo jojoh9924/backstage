@@ -1,0 +1,170 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-react-app
+  title: Create React Web Application
+  description: Scaffold a React single-page application with TypeScript, testing, CI/CD, and CDN deployment configuration.
+  tags:
+    - react
+    - typescript
+    - frontend
+    - web
+  annotations:
+    rhdh.redhat.com/time-saved: '12 hours'
+spec:
+  owner: group:default/frontend-platform
+  type: website
+  lifecycle: production
+
+  parameters:
+    - title: Application Details
+      required:
+        - name
+        - owner
+      properties:
+        name:
+          title: Application Name
+          type: string
+          description: Unique name for the web application
+          ui:autofocus: true
+          pattern: '^[a-z][a-z0-9-]*$'
+        description:
+          title: Description
+          type: string
+          description: Brief description of the application
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        owner:
+          title: Owner
+          type: string
+          description: Team that owns this application
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group]
+
+    - title: Technical Stack
+      properties:
+        framework:
+          title: Framework
+          type: string
+          enum:
+            - vite-react
+            - next
+            - remix
+          default: vite-react
+          enumNames:
+            - Vite + React
+            - Next.js
+            - Remix
+        styling:
+          title: Styling Solution
+          type: string
+          enum:
+            - patternfly
+            - tailwind
+            - css-modules
+            - styled-components
+          default: patternfly
+          enumNames:
+            - PatternFly
+            - Tailwind CSS
+            - CSS Modules
+            - Styled Components
+        stateManagement:
+          title: State Management
+          type: string
+          enum:
+            - react-query
+            - redux-toolkit
+            - zustand
+            - none
+          default: react-query
+          enumNames:
+            - React Query (TanStack)
+            - Redux Toolkit
+            - Zustand
+            - None (React built-in)
+        features:
+          title: Additional Features
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - storybook
+              - playwright-e2e
+              - i18n
+              - analytics
+              - error-boundary
+          ui:widget: checkboxes
+
+    - title: Repository & Deployment
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+        deployTarget:
+          title: Deployment Platform
+          type: string
+          enum:
+            - cdn-cloudfront
+            - vercel
+            - openshift
+          default: cdn-cloudfront
+          enumNames:
+            - AWS CloudFront + S3
+            - Vercel
+            - OpenShift (containerized)
+
+  steps:
+    - id: log-inputs
+      name: Validating configuration
+      action: debug:log
+      input:
+        message: |
+          Creating React app "${{ parameters.name }}"
+          Framework: ${{ parameters.framework }}
+          Styling: ${{ parameters.styling }}
+
+    - id: log-scaffold
+      name: Generating project files
+      action: debug:log
+      input:
+        message: Scaffolded React application with TypeScript, testing harness, and CI/CD pipeline
+
+    - id: log-repo
+      name: Publishing to repository
+      action: debug:log
+      input:
+        message: Pushed to ${{ parameters.repoUrl }}
+
+    - id: log-register
+      name: Registering in catalog
+      action: debug:log
+      input:
+        message: Registered ${{ parameters.name }} in Backstage catalog
+
+  output:
+    links:
+      - title: Open Repository
+        icon: github
+        url: https://github.com/example/${{ parameters.name }}
+      - title: View in Catalog
+        icon: catalog
+        url: /catalog/default/component/${{ parameters.name }}
+    text:
+      - title: Next Steps
+        content: |
+          **${{ parameters.name }}** has been created.
+
+          - ${{ parameters.framework }} project scaffolded with TypeScript
+          - ${{ parameters.styling }} configured
+          - CI/CD pipeline ready for ${{ parameters.deployTarget }}

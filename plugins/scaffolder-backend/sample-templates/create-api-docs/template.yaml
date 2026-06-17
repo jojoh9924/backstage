@@ -1,0 +1,140 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-api-docs
+  title: Create API Documentation Site
+  description: Generate a TechDocs documentation site for an API, complete with OpenAPI spec rendering, architecture diagrams, and runbook pages.
+  tags:
+    - documentation
+    - techdocs
+    - api
+  annotations:
+    rhdh.redhat.com/time-saved: '5 hours'
+spec:
+  owner: group:default/developer-experience
+  type: documentation
+  lifecycle: production
+
+  parameters:
+    - title: Documentation Details
+      required:
+        - name
+        - owner
+        - apiEntity
+      properties:
+        name:
+          title: Documentation Name
+          type: string
+          description: Name for this documentation site
+          ui:autofocus: true
+        owner:
+          title: Owner
+          type: string
+          description: Team responsible for this documentation
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: [Group]
+        apiEntity:
+          title: API Entity
+          type: string
+          description: The catalog API entity these docs describe
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: [API]
+        apiSpecType:
+          title: API Specification Type
+          type: string
+          enum:
+            - openapi
+            - asyncapi
+            - graphql
+            - grpc
+          default: openapi
+          enumNames:
+            - OpenAPI (REST)
+            - AsyncAPI (Event-driven)
+            - GraphQL
+            - gRPC / Protobuf
+
+    - title: Content Sections
+      properties:
+        sections:
+          title: Documentation Sections
+          description: Select the sections to include in the generated docs
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - getting-started
+              - authentication
+              - rate-limits
+              - error-codes
+              - changelog
+              - architecture
+              - runbook
+              - sla
+          ui:widget: checkboxes
+          default:
+            - getting-started
+            - authentication
+            - error-codes
+        includeExamples:
+          title: Include code examples
+          type: boolean
+          default: true
+          description: Auto-generate request/response examples from the spec
+        exampleLanguages:
+          title: Example Languages
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - curl
+              - python
+              - javascript
+              - go
+              - java
+          ui:widget: checkboxes
+          default:
+            - curl
+            - python
+
+  steps:
+    - id: log-inputs
+      name: Validating documentation config
+      action: debug:log
+      input:
+        message: |
+          Creating API docs "${{ parameters.name }}"
+          API entity: ${{ parameters.apiEntity }}
+          Spec type: ${{ parameters.apiSpecType }}
+          Sections: ${{ parameters.sections }}
+
+    - id: log-scaffold
+      name: Generating documentation site
+      action: debug:log
+      input:
+        message: Generated mkdocs.yml, doc pages, and OpenAPI spec rendering config
+
+    - id: log-register
+      name: Registering TechDocs entity
+      action: debug:log
+      input:
+        message: Registered TechDocs site for ${{ parameters.name }}
+
+  output:
+    links:
+      - title: View Documentation
+        icon: docs
+        url: /docs/default/component/${{ parameters.name }}
+    text:
+      - title: Next Steps
+        content: |
+          **${{ parameters.name }}** documentation site created.
+
+          - TechDocs site scaffolded with ${{ parameters.apiSpecType }} spec rendering
+          - Docs will auto-build and publish on merge to main

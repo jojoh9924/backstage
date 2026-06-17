@@ -205,19 +205,21 @@ export const NotificationsTable = ({
               </div>
               <Flex direction="column" gap="1">
                 <Text variant="body-medium">
-                  {notification.payload.link ? (
-                    <Link
-                      to={notification.payload.link}
-                      onClick={() => {
-                        if (markAsReadOnLinkOpen && !notification.read) {
-                          onSwitchReadStatus([notification.id], true);
-                        }
-                      }}
-                    >
-                      {notification.payload.title}
-                    </Link>
-                  ) : (
-                    notification.payload.title
+                  {notification.payload.title}
+                  {notification.payload.link && (
+                    <>
+                      {' '}
+                      <Link
+                        to={notification.payload.link}
+                        onClick={() => {
+                          if (markAsReadOnLinkOpen && !notification.read) {
+                            onSwitchReadStatus([notification.id], true);
+                          }
+                        }}
+                      >
+                        View details
+                      </Link>
+                    </>
                   )}
                 </Text>
                 {notification.payload.description ? (

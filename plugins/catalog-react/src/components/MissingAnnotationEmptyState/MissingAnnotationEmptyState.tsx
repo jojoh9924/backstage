@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ReactNode } from 'react';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
@@ -100,6 +101,7 @@ function generateDescription(
 export function MissingAnnotationEmptyState(props: {
   annotation: string | string[];
   readMoreUrl?: string;
+  titleAction?: ReactNode;
 }) {
   const { t } = useTranslationRef(catalogReactTranslationRef);
 
@@ -111,7 +113,7 @@ export function MissingAnnotationEmptyState(props: {
     // ignore when entity context doesnt exist
   }
 
-  const { annotation, readMoreUrl } = props;
+  const { annotation, readMoreUrl, titleAction } = props;
   const annotations = Array.isArray(annotation) ? annotation : [annotation];
   const url =
     readMoreUrl ||
@@ -121,29 +123,36 @@ export function MissingAnnotationEmptyState(props: {
   const entityKind = entity?.kind || 'Component';
   const { yamlText, lineNumbers } = generateYamlExample(annotations, entity);
   return (
-    <EmptyState
-      missing="field"
-      title={t('missingAnnotationEmptyState.title')}
-      description={generateDescription(annotations, entityKind, t)}
-      action={
-        <>
-          <Typography variant="body1">
-            {t('missingAnnotationEmptyState.annotationYaml', { entityKind })}
-          </Typography>
-          <Box className={classes.code}>
-            <CodeSnippet
-              text={yamlText}
-              language="yaml"
-              showLineNumbers
-              highlightedNumbers={lineNumbers}
-              customStyle={{ background: 'inherit', fontSize: '115%' }}
-            />
-          </Box>
-          <Button color="primary" component={Link} to={url}>
-            {t('missingAnnotationEmptyState.readMore')}
-          </Button>
-        </>
-      }
-    />
+    <div style={{ position: 'relative' }}>
+      {titleAction && (
+        <div style={{ position: 'absolute', top: 24, right: 24, zIndex: 1 }}>
+          {titleAction}
+        </div>
+      )}
+      <EmptyState
+        missing="field"
+        title={t('missingAnnotationEmptyState.title')}
+        description={generateDescription(annotations, entityKind, t)}
+        action={
+          <>
+            <Typography variant="body1">
+              {t('missingAnnotationEmptyState.annotationYaml', { entityKind })}
+            </Typography>
+            <Box className={classes.code}>
+              <CodeSnippet
+                text={yamlText}
+                language="yaml"
+                showLineNumbers
+                highlightedNumbers={lineNumbers}
+                customStyle={{ background: 'inherit', fontSize: '115%' }}
+              />
+            </Box>
+            <Button color="primary" component={Link} to={url}>
+              {t('missingAnnotationEmptyState.readMore')}
+            </Button>
+          </>
+        }
+      />
+    </div>
   );
 }

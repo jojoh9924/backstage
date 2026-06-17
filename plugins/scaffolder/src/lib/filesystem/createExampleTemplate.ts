@@ -16,15 +16,24 @@
 
 import { TemplateDirectoryAccess } from './types';
 
-const files = {
-  'template.yaml': `
+export interface CreateExampleTemplateOptions {
+  timeSaved?: string;
+}
+
+function buildFiles(options?: CreateExampleTemplateOptions) {
+  const timeSavedAnnotation = options?.timeSaved
+    ? `\n  annotations:\n    rhdh.redhat.com/time-saved: '${options.timeSaved}'`
+    : '';
+
+  return {
+    'template.yaml': `
 apiVersion: scaffolder.backstage.io/v1beta3
 # https://backstage.io/docs/features/software-catalog/descriptor-format#kind-template
 kind: Template
 metadata:
   name: generated-example-template
   title: Scaffolder Example Template
-  description: An example template for the scaffolder
+  description: An example template for the scaffolder${timeSavedAnnotation}
 spec:
   owner: user:guest
   type: service
@@ -68,8 +77,8 @@ spec:
           name: \${{parameters.name}}
           owner: \${{parameters.owner}}
           destination: \${{ parameters.repoUrl | parseRepoUrl }}`,
-  'skeleton/README.md': `# This service is named \${{values.name}}!`,
-  'skeleton/catalog-info.yaml': `apiVersion: backstage.io/v1alpha1
+    'skeleton/README.md': `# This service is named \${{values.name}}!`,
+    'skeleton/catalog-info.yaml': `apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: \${{values.component_id | dump}}
@@ -83,12 +92,14 @@ spec:
   type: service
   lifecycle: experimental
   owner: \${{values.owner | dump}}`,
-};
+  };
+}
 
 export async function createExampleTemplate(
   directory: TemplateDirectoryAccess,
+  options?: CreateExampleTemplateOptions,
 ) {
-  for (const [name, data] of Object.entries(files)) {
+  for (const [name, data] of Object.entries(buildFiles(options))) {
     await directory.createFile({ name, data });
   }
   return directory;

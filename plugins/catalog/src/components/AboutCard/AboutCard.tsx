@@ -20,6 +20,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CachedIcon from '@material-ui/icons/Cached';
 import EditIcon from '@material-ui/icons/Edit';
 import DocsIcon from '@material-ui/icons/Description';
+import WarningIcon from '@material-ui/icons/Warning';
 import CreateComponentIcon from '@material-ui/icons/AddCircleOutline';
 
 import {
@@ -47,11 +48,13 @@ import {
   DEFAULT_NAMESPACE,
   ANNOTATION_EDIT_URL,
   ANNOTATION_LOCATION,
+  RELATION_OWNED_BY,
   stringifyEntityRef,
 } from '@backstage/catalog-model';
 import {
   catalogApiRef,
   getEntitySourceLocation,
+  getEntityRelations,
   useEntity,
 } from '@backstage/plugin-catalog-react';
 import { useEntityPermission } from '@backstage/plugin-catalog-react/alpha';
@@ -74,14 +77,40 @@ import { useSourceTemplateCompoundEntityRef } from './hooks';
 import { AboutContent } from './AboutContent';
 import { makeStyles } from '@material-ui/core/styles';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   linkContainer: {
     border: '1px solid var(--bui-border-1)',
     borderLeft: 'none',
     borderRight: 'none',
     marginBottom: 'var(--bui-space-6)',
   },
-});
+  connectSourceWrapper: {
+    display: 'flex',
+    justifyContent: 'left',
+    paddingBottom: theme.spacing(1.5),
+  },
+  connectSourceBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '4px 5px',
+    fontSize: '0.4rem',
+    fontWeight: theme.typography.fontWeightBold,
+    textTransform: 'none',
+    letterSpacing: 0.1,
+    color: theme.palette.primary.main,
+    background: 'none',
+    border: `1px solid ${theme.palette.primary.main}`,
+    borderRadius: 12,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    textDecoration: 'none',
+    '&:hover': {
+      backgroundColor: 'rgba(21, 101, 192, 0.06)',
+      textDecoration: 'none',
+    },
+  },
+}));
 
 export function useCatalogSourceIconLinkProps() {
   const { entity } = useEntity();
@@ -106,14 +135,42 @@ function useTechdocsReaderIconLinkProps(): IconLinkVerticalProps {
   const viewTechdocLink = useRouteRef(viewTechDocRouteRef);
   const { t } = useTranslationRef(catalogTranslationRef);
 
+  const hasTechdocs = !!(
+    entity.metadata.annotations?.[TECHDOCS_ANNOTATION] ||
+    entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
+  );
+  const owners = getEntityRelations(entity, RELATION_OWNED_BY);
+  const isTeamA = owners.some(ref => ref.name === 'team-a');
+  const showAlert = !hasTechdocs && isTeamA;
+
+  const icon = showAlert ? (
+    <span
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        overflow: 'visible',
+      }}
+    >
+      <DocsIcon />
+      <WarningIcon
+        style={{
+          position: 'absolute',
+          top: -4,
+          right: -10,
+          fontSize: '0.9rem',
+          color: '#e5a000',
+          filter: 'drop-shadow(0 0 1px #fff)',
+        }}
+      />
+    </span>
+  ) : (
+    <DocsIcon />
+  );
+
   return {
     label: t('aboutCard.viewTechdocs'),
-    disabled:
-      !(
-        entity.metadata.annotations?.[TECHDOCS_ANNOTATION] ||
-        entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
-      ) || !viewTechdocLink,
-    icon: <DocsIcon />,
+    disabled: !hasTechdocs || !viewTechdocLink,
+    icon,
     href: buildTechDocsURL(entity, viewTechdocLink),
   };
 }
@@ -169,12 +226,21 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
   const catalogApi = useApi(catalogApiRef);
   const alertApi = useApi(alertApiRef);
   const errorApi = useApi(errorApiRef);
+  const scmIntegrationsApi = useApi(scmIntegrationsApiRef);
   const templateRoute = useRouteRef(createFromTemplateRouteRef);
   const sourceTemplateRef = useSourceTemplateCompoundEntityRef(entity);
   const { allowed: canRefresh } = useEntityPermission(
     catalogEntityRefreshPermission,
   );
   const { t } = useTranslationRef(catalogTranslationRef);
+
+  const entitySourceLocation = getEntitySourceLocation(
+    entity,
+    scmIntegrationsApi,
+  );
+  const sourceEmpty = !entitySourceLocation;
+  const owners = getEntityRelations(entity, RELATION_OWNED_BY);
+  const isTeamA = owners.some(ref => ref.name === 'team-a');
 
   const entityMetadataEditUrl =
     entity.metadata.annotations?.[ANNOTATION_EDIT_URL];
@@ -196,9 +262,16 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
     }
   }, [catalogApi, entity, alertApi, t, errorApi]);
 
+  const handleUpdate = useCallback(() => {
+    if (entityMetadataEditUrl) {
+      window.open(entityMetadataEditUrl, '_blank');
+    }
+  }, [entityMetadataEditUrl]);
+
   return (
     <EntityInfoCard
       title={t('aboutCard.title')}
+      onUpdate={handleUpdate}
       headerActions={
         <>
           {allowRefresh && canRefresh && (
@@ -236,8 +309,20 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
     >
       <div className={classes.linkContainer}>
         {iconLinks ?? <DefaultAboutCardSubheader />}
+        {sourceEmpty && isTeamA && entityMetadataEditUrl && (
+          <div className={classes.connectSourceWrapper}>
+            <a
+              href={entityMetadataEditUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={classes.connectSourceBtn}
+            >
+              Connect source
+            </a>
+          </div>
+        )}
       </div>
-      <AboutContent entity={entity} />
+      <AboutContent entity={entity} editUrl={entityMetadataEditUrl} />
     </EntityInfoCard>
   );
 }

@@ -4,6 +4,8 @@ metadata:
   name: notifications-demo
   title: Test Notifications template
   description: scaffolder v1beta3 template demo sending notification
+  annotations:
+    rhdh.redhat.com/time-saved: '2 hours'
 spec:
   owner: backstage/techdocs-core
   type: service
