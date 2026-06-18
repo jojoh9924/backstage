@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Content, InfoCard, Page } from '@backstage/core-components';
+import { useState, useEffect } from 'react';
+import { Content, InfoCard, Page, Progress } from '@backstage/core-components';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
@@ -26,10 +27,14 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
+import CloseIcon from '@material-ui/icons/Close';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import { Link } from '@backstage/core-components';
 import { makeStyles } from '@material-ui/core/styles';
+import { useApi } from '@backstage/core-plugin-api';
+import { catalogApiRef } from '@backstage/plugin-catalog-react';
+import { Entity } from '@backstage/catalog-model';
 
 const CHART_DATA = [
   { label: 'May 11, 2026', returning: 110, new: 18 },
@@ -45,13 +50,32 @@ const TOP_TEMPLATES = [
   { name: 'Spring Boot gRPC Service', executions: 2 },
 ];
 
-const READINESS_COMPONENTS = [
-  { name: 'wayback-search', score: 4.0 },
-  { name: 'wayback-archive', score: 5.5 },
-  { name: 'wayback-archive-storage', score: 5.5 },
-  { name: 'www-artist', score: 7.0 },
-  { name: 'artist-lookup', score: 7.5 },
-];
+function computeReadinessScore(entity: Entity): number {
+  let score = 0;
+  const meta = entity.metadata;
+  const spec = entity.spec as Record<string, unknown> | undefined;
+
+  if (meta.description && (meta.description as string).length > 0) score += 1.5;
+  if (meta.tags && (meta.tags as string[]).length > 0) score += 1;
+  if (meta.links && (meta.links as unknown[]).length > 0) score += 1;
+  if (spec?.owner) score += 1.5;
+  if (spec?.system) score += 1.5;
+  if (spec?.lifecycle) score += 1;
+
+  const annotations = meta.annotations ?? {};
+  if (annotations['backstage.io/techdocs-ref']) score += 1;
+  if (annotations['backstage.io/source-location'] || annotations['backstage.io/source-template']) score += 1;
+
+  const remaining = Object.keys(annotations).filter(
+    k =>
+      !k.startsWith('backstage.io/managed-by') &&
+      !k.startsWith('backstage.io/view-url') &&
+      !k.startsWith('backstage.io/edit-url'),
+  );
+  if (remaining.length >= 3) score += 0.5;
+
+  return Math.min(score, 10);
+}
 
 const READINESS_TIERS = [
   { label: 'Low (0\u20133.9)', min: 0, max: 4, color: '#d32f2f' },
@@ -191,6 +215,23 @@ const useStyles = makeStyles(theme => ({
     marginRight: 4,
     verticalAlign: 'middle',
   },
+  previewPanel: {
+    marginTop: theme.spacing(2),
+    maxHeight: 200,
+    overflowY: 'auto' as const,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: theme.shape.borderRadius,
+  },
+  previewHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: theme.spacing(2),
+  },
+  previewTierLabel: {
+    fontSize: '0.85rem',
+    fontWeight: 600,
+  },
 }));
 
 function ActiveUsersChart() {
@@ -257,15 +298,44 @@ function ActiveUsersChart() {
 
 function ReadinessScoreChart() {
   const classes = useStyles();
+  const catalogApi = useApi(catalogApiRef);
+  const [components, setComponents] = useState<
+    { name: string; owner: string; score: number }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    catalogApi
+      .getEntities({ filter: { kind: 'Component' } })
+      .then(response => {
+        setComponents(
+          response.items.map(entity => ({
+            name: entity.metadata.name,
+            owner: ((entity.spec as Record<string, unknown> | undefined)?.owner as string) ?? 'unknown',
+            score: computeReadinessScore(entity),
+          })),
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [catalogApi]);
+
+  if (loading) {
+    return (
+      <InfoCard title="Readiness Score Distribution">
+        <Progress />
+      </InfoCard>
+    );
+  }
 
   const tierCounts = READINESS_TIERS.map(tier => ({
     ...tier,
-    count: READINESS_COMPONENTS.filter(
+    count: components.filter(
       c => c.score >= tier.min && c.score < tier.max,
     ).length,
   }));
 
-  const total = READINESS_COMPONENTS.length;
+  const total = components.length;
   const r = 70;
   const cx = 100;
   const cy = 95;
@@ -284,7 +354,7 @@ function ReadinessScoreChart() {
   return (
     <InfoCard title="Readiness Score Distribution">
       <Typography className={classes.chartSummary}>
-        team-a &mdash; {total} components
+        All teams &mdash; {total} components
       </Typography>
       <svg
         viewBox="0 0 200 200"
@@ -304,6 +374,8 @@ function ReadinessScoreChart() {
             strokeDasharray={`${seg.arc} ${circumference - seg.arc}`}
             strokeDashoffset={seg.offset}
             transform={`rotate(-90 ${cx} ${cy})`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => setSelectedTier(prev => prev === seg.label ? null : seg.label)}
           />
         ))}
         <circle cx={cx} cy={cy} r={55} fill="white" />
@@ -325,6 +397,8 @@ function ReadinessScoreChart() {
               fontSize={10}
               fontWeight={700}
               fill="#fff"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setSelectedTier(prev => prev === seg.label ? null : seg.label)}
             >
               {pct}%
             </text>
@@ -344,6 +418,55 @@ function ReadinessScoreChart() {
           components
         </text>
       </svg>
+      {selectedTier && (() => {
+        const tier = READINESS_TIERS.find(t => t.label === selectedTier);
+        if (!tier) return null;
+        const filtered = components.filter(
+          c => c.score >= tier.min && c.score < tier.max,
+        );
+        return (
+          <>
+            <div className={classes.previewHeader}>
+              <Typography className={classes.previewTierLabel}>
+                <span
+                  className={classes.readinessLegendDot}
+                  style={{ background: tier.color }}
+                />
+                {tier.label} &mdash; {filtered.length} component{filtered.length !== 1 ? 's' : ''}
+              </Typography>
+              <IconButton size="small" onClick={() => setSelectedTier(null)}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </div>
+            <div className={classes.previewPanel}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Component</TableCell>
+                    <TableCell>Owner</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtered.map(c => (
+                    <TableRow key={c.name}>
+                      <TableCell>
+                        <Link to={`/catalog/default/component/${c.name}`}>
+                          {c.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link to={`/catalog/default/group/${c.owner}`}>
+                          {c.owner}
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        );
+      })()}
       <div className={classes.readinessLegend}>
         {tierCounts.map(tier => (
           <span key={tier.label}>
