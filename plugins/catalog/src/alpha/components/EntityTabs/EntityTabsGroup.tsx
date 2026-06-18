@@ -190,8 +190,8 @@ function useTechdocsAlert(): boolean {
       entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
     );
     const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-    const isTeamA = owners.some(ref => ref.name === 'team-a');
-    return !hasTechdocs && isTeamA;
+    const isTargetOwner = owners.some(ref => ref.name === 'guest');
+    return !hasTechdocs && isTargetOwner;
   } catch {
     return false;
   }

@@ -110,11 +110,11 @@ export const EmbeddedDocsRouter = (
 
   if (!projectId) {
     const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-    const isTeamA = owners.some(ref => ref.name === 'team-a');
+    const isTargetOwner = owners.some(ref => ref.name === 'guest');
     const editUrl = entity.metadata.annotations?.[ANNOTATION_EDIT_URL];
 
     const connectButton =
-      isTeamA && editUrl ? (
+      isTargetOwner && editUrl ? (
         <a
           href={editUrl}
           target="_blank"

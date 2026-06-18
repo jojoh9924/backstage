@@ -140,8 +140,8 @@ function useTechdocsReaderIconLinkProps(): IconLinkVerticalProps {
     entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
   );
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-  const isTeamA = owners.some(ref => ref.name === 'team-a');
-  const showAlert = !hasTechdocs && isTeamA;
+  const isTargetOwner = owners.some(ref => ref.name === 'guest');
+  const showAlert = !hasTechdocs && isTargetOwner;
 
   const icon = showAlert ? (
     <span
@@ -240,7 +240,7 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
   );
   const sourceEmpty = !entitySourceLocation;
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-  const isTeamA = owners.some(ref => ref.name === 'team-a');
+  const isTargetOwner = owners.some(ref => ref.name === 'guest');
 
   const entityMetadataEditUrl =
     entity.metadata.annotations?.[ANNOTATION_EDIT_URL];
@@ -310,7 +310,7 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
     >
       <div className={classes.linkContainer}>
         {iconLinks ?? <DefaultAboutCardSubheader />}
-        {sourceEmpty && isTeamA && entityMetadataEditUrl && (
+        {sourceEmpty && isTargetOwner && entityMetadataEditUrl && (
           <div className={classes.connectSourceWrapper}>
             <a
               href={entityMetadataEditUrl}

@@ -32,7 +32,7 @@ import { useEntity } from '../../hooks/useEntity';
 import { getEntityRelations } from '../../utils/getEntityRelations';
 import { registerCard, unregisterCard, confirmCard } from './freshnessStore';
 
-const PROMPT_BANNER_OWNERS = new Set(['team-a']);
+const PROMPT_BANNER_OWNERS = new Set(['guest']);
 
 const LAST_UPDATED_MAP: Record<string, string> = {
   'wayback-search': '3 months ago',
