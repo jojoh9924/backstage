@@ -143,9 +143,15 @@ export function DefaultEntityContentLayout(props: EntityContentLayoutProps) {
   // Keep support for 'summary' type at runtime for backward compatibility
   // even though it's been removed from the type system
   const summaryCards = cards.filter(card => card.type === ('summary' as any));
-  const contentCards = cards.filter(
-    card => !card.type || card.type === 'content',
-  );
+  const contentCards = cards
+    .filter(card => !card.type || card.type === 'content')
+    .sort((a, b) => {
+      const aId = String(a.element?.props?.node?.spec?.id ?? '');
+      const bId = String(b.element?.props?.node?.spec?.id ?? '');
+      const aIsRelations = aId.includes('relations') ? 0 : 1;
+      const bIsRelations = bId.includes('relations') ? 0 : 1;
+      return aIsRelations - bIsRelations;
+    });
 
   if (summaryCards.length > 0 && !hasLoggedSummaryWarning) {
     hasLoggedSummaryWarning = true;

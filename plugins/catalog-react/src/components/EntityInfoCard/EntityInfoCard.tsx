@@ -180,8 +180,13 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
     entityName = undefined;
   }
 
+  const suppressBanner = cardId === 'catalog-graph';
   const shouldRegister =
-    inherentlyStale && showPromptBanner && !!cardId && !!entityName;
+    inherentlyStale &&
+    showPromptBanner &&
+    !suppressBanner &&
+    !!cardId &&
+    !!entityName;
 
   useEffect(() => {
     if (shouldRegister) {
@@ -200,7 +205,7 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
 
   return (
     <div className={classes.wrapper}>
-      {entityStale && showPromptBanner && (
+      {entityStale && showPromptBanner && !suppressBanner && (
         <div className={classes.stalePrompt}>
           <CheckCircleIcon className={classes.stalePromptIcon} />
           <span className={classes.stalePromptText}>
@@ -231,6 +236,7 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
                   {title}
                 </Text>
                 {entityName &&
+                  !suppressBanner &&
                   (() => {
                     const text = confirmed
                       ? 'just now'
