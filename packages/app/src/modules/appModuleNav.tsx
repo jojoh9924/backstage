@@ -27,7 +27,6 @@ import { Link } from 'react-router-dom';
 import SearchIcon from '@material-ui/icons/Search';
 import MenuIcon from '@material-ui/icons/Menu';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
-import CodeIcon from '@material-ui/icons/Code';
 import { createFrontendModule } from '@backstage/frontend-plugin-api';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
 import { SidebarSearchModal } from '@backstage/plugin-search';
@@ -108,11 +107,6 @@ export const appModuleNav = createFrontendModule({
                   icon={TrendingUpIcon}
                   to="/adoption-insights"
                   text="Adoption Insights"
-                />
-                <SidebarItem
-                  icon={CodeIcon}
-                  to="/engineering-insights"
-                  text="Engineering Insights"
                 />
                 {nav.take('page:devtools')}
                 {nav.take('page:user-settings')}

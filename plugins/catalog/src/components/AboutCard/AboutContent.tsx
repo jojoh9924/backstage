@@ -124,7 +124,9 @@ export function AboutContent(props: AboutContentProps) {
     kind: 'domain',
   });
   const ownedByRelations = getEntityRelations(entity, RELATION_OWNED_BY);
-  const isTeamA = ownedByRelations.some(ref => ref.name === 'team-a');
+  const isTeamA = ownedByRelations.some(
+    ref => ref.name === 'guest' || ref.name === 'team-a',
+  );
 
   function renderFieldWithFallback(
     relations: { kind: string; namespace: string; name: string }[],

@@ -67,7 +67,7 @@ function isDataFresh(entityName: string): boolean {
   return true;
 }
 
-function computeReadinessScore(entity: Entity): number {
+function computeAccuracyScore(entity: Entity): number {
   let raw = 0;
   if (getEntityRelations(entity, RELATION_OWNED_BY).length > 0) raw += 1.5;
   if (entity.metadata?.description) raw += 1.5;
@@ -321,13 +321,13 @@ export const columnFactories = Object.freeze({
       width: 'auto',
     };
   },
-  createReadinessScoreColumn(): TableColumn<CatalogTableRow> {
+  createAccuracyScoreColumn(): TableColumn<CatalogTableRow> {
     return {
       title: (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          Readiness
+          Accuracy
           <Tooltip
-            title="The readiness score (0–10) measures how complete and fresh a catalog entry is."
+            title="The accuracy score (0–10) measures how complete and fresh a catalog entry is."
             arrow
             placement="top"
           >
@@ -354,12 +354,12 @@ export const columnFactories = Object.freeze({
       ),
       sorting: true,
       headerStyle: { textAlign: 'center' },
-      cellStyle: { textAlign: 'center', paddingRight: 50 },
+      cellStyle: { textAlign: 'center', paddingRight: 60 },
       customSort({ entity: a }, { entity: b }) {
-        return computeReadinessScore(a) - computeReadinessScore(b);
+        return computeAccuracyScore(a) - computeAccuracyScore(b);
       },
       render: ({ entity }) => {
-        const score = computeReadinessScore(entity);
+        const score = computeAccuracyScore(entity);
         const color = scoreColor(score);
         const namespace = entity.metadata.namespace || 'default';
         const kind = entity.kind.toLocaleLowerCase('en-US');
@@ -368,7 +368,7 @@ export const columnFactories = Object.freeze({
         return (
           <a
             href={href}
-            title={`Readiness Score: ${score.toFixed(1)} / 10`}
+            title={`Accuracy Score: ${score.toFixed(1)} / 10`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

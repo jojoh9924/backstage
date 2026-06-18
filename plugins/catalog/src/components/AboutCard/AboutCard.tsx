@@ -140,7 +140,9 @@ function useTechdocsReaderIconLinkProps(): IconLinkVerticalProps {
     entity.metadata.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
   );
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-  const isTargetOwner = owners.some(ref => ref.name === 'guest');
+  const isTargetOwner = owners.some(
+    ref => ref.name === 'guest' || ref.name === 'team-a',
+  );
   const showAlert = !hasTechdocs && isTargetOwner;
 
   const icon = showAlert ? (
@@ -240,7 +242,9 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
   );
   const sourceEmpty = !entitySourceLocation;
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
-  const isTargetOwner = owners.some(ref => ref.name === 'guest');
+  const isTargetOwner = owners.some(
+    ref => ref.name === 'guest' || ref.name === 'team-a',
+  );
 
   const entityMetadataEditUrl =
     entity.metadata.annotations?.[ANNOTATION_EDIT_URL];
