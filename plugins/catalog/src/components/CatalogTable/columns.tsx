@@ -18,6 +18,7 @@ import {
   EntityRefLink,
   EntityRefLinks,
   getEntityRelations,
+  getFreshnessFraction,
   type EntityPresentationApi,
 } from '@backstage/plugin-catalog-react';
 import Chip from '@material-ui/core/Chip';
@@ -84,7 +85,11 @@ function computeReadinessScore(entity: Entity): number {
     entity.metadata?.annotations?.[TECHDOCS_EXTERNAL_ANNOTATION]
   )
     raw += 1;
-  if (isDataFresh(entity.metadata.name)) raw += 1.5;
+  if (isDataFresh(entity.metadata.name)) {
+    raw += 1.5;
+  } else {
+    raw += 1.5 * getFreshnessFraction(entity.metadata.name);
+  }
   return Math.round(raw * 10) / 10;
 }
 

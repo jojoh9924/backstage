@@ -44,7 +44,7 @@ const DEFAULT_TIME_SAVED: Record<string, string> = {
   library: '3 hours',
   documentation: '2 hours',
 };
-const FALLBACK_TIME_SAVED = '5 hours';
+const FALLBACK_TIME_SAVED = 'unknown';
 
 function ClockIcon() {
   return (

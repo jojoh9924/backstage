@@ -79,7 +79,10 @@ export const EntityLabelsCard = (props: EntityLabelsCardProps) => {
   });
 
   return (
-    <EntityInfoCard title={title || t('entityLabelsCard.title')}>
+    <EntityInfoCard
+      title={title || t('entityLabelsCard.title')}
+      cardId="labels"
+    >
       {!labels || Object.keys(labels).length === 0 ? (
         <EntityLabelsEmptyState />
       ) : (

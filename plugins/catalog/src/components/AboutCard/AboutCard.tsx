@@ -271,6 +271,7 @@ export function InternalAboutCard(props: InternalAboutCardProps) {
   return (
     <EntityInfoCard
       title={t('aboutCard.title')}
+      cardId="about"
       onUpdate={handleUpdate}
       headerActions={
         <>

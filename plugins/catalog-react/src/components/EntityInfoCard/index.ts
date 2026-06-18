@@ -16,3 +16,11 @@
 
 export { EntityInfoCard } from './EntityInfoCard';
 export type { EntityInfoCardProps } from './EntityInfoCard';
+export {
+  registerCard,
+  unregisterCard,
+  confirmCard,
+  getFreshnessFraction,
+  subscribe as freshnessSubscribe,
+  getSnapshot as freshnessGetSnapshot,
+} from './freshnessStore';

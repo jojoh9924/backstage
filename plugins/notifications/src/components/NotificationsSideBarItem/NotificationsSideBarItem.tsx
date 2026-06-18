@@ -592,7 +592,11 @@ export const NotificationsSidebarItem = (
                                   lineHeight: 1.5,
                                 }}
                               >
-                                View Insights →
+                                {`${
+                                  n.payload.topic === 'catalog-freshness'
+                                    ? 'Review Component'
+                                    : 'View Insights'
+                                } →`}
                               </MuiButton>
                             )}
                           </Typography>

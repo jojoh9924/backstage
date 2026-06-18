@@ -53,7 +53,11 @@ export function EntityRelationCard(props: EntityRelationCardProps) {
   });
 
   return (
-    <EntityInfoCard title={title} className={className}>
+    <EntityInfoCard
+      title={title}
+      className={className}
+      cardId={`relation-${relationType}`}
+    >
       {error ? (
         <Alert status="warning" icon title={error.message} role="status" />
       ) : (

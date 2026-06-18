@@ -125,6 +125,7 @@ export const CatalogGraphCard = (
   return (
     <EntityInfoCard
       title={title}
+      cardId="catalog-graph"
       headerActions={action}
       footerActions={
         <ButtonLink

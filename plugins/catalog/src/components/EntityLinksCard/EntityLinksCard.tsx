@@ -40,7 +40,7 @@ export const EntityLinksCard = (props: EntityLinksCardProps) => {
   const links = entity?.metadata?.links;
 
   return (
-    <EntityInfoCard title={t('entityLinksCard.title')}>
+    <EntityInfoCard title={t('entityLinksCard.title')} cardId="links">
       {!links || links.length === 0 ? (
         <EntityLinksEmptyState />
       ) : (

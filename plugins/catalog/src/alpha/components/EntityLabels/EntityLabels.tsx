@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { useSyncExternalStore } from 'react';
 import { HeaderLabel } from '@backstage/core-components';
 import {
   Entity,
@@ -23,6 +24,9 @@ import {
 import {
   EntityRefLinks,
   getEntityRelations,
+  getFreshnessFraction,
+  freshnessSubscribe,
+  freshnessGetSnapshot,
 } from '@backstage/plugin-catalog-react';
 import { useTranslationRef } from '@backstage/core-plugin-api/alpha';
 import { catalogTranslationRef } from '../../translation';
@@ -61,7 +65,10 @@ function isDataFresh(entityName: string): boolean {
   return true;
 }
 
-function computeReadinessScore(entity: Entity): number {
+function computeReadinessScore(
+  entity: Entity,
+  freshnessFraction: number,
+): number {
   let raw = 0;
 
   const owners = getEntityRelations(entity, RELATION_OWNED_BY);
@@ -84,7 +91,11 @@ function computeReadinessScore(entity: Entity): number {
   );
   if (hasTechdocs) raw += 1;
 
-  if (isDataFresh(entity.metadata.name)) raw += 1.5;
+  if (isDataFresh(entity.metadata.name)) {
+    raw += 1.5;
+  } else {
+    raw += 1.5 * freshnessFraction;
+  }
 
   return Math.round(raw * 10) / 10;
 }
@@ -103,7 +114,10 @@ export function EntityLabels(props: EntityLabelsProps) {
   const { entity } = props;
   const ownedByRelations = getEntityRelations(entity, RELATION_OWNED_BY);
   const { t } = useTranslationRef(catalogTranslationRef);
-  const score = computeReadinessScore(entity);
+
+  useSyncExternalStore(freshnessSubscribe, freshnessGetSnapshot);
+  const fraction = getFreshnessFraction(entity.metadata.name);
+  const score = computeReadinessScore(entity, fraction);
   const color = scoreColor(score);
 
   return (

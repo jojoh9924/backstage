@@ -233,7 +233,11 @@ export const NotificationsTable = ({
                         lineHeight: 1.5,
                       }}
                     >
-                      View Insights →
+                      {`${
+                        notification.payload.topic === 'catalog-freshness'
+                          ? 'Review Component'
+                          : 'View Insights'
+                      } →`}
                     </MuiButton>
                   )}
                 </Text>

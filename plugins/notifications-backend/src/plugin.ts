@@ -113,12 +113,21 @@ export const notificationsPlugin = createBackendPlugin({
           'demo-time-saved-team-v1',
           'demo-time-saved-team-v2',
           'demo-time-saved-personal-v4',
+          'demo-staleness-reminder-v1',
         ];
         for (const oldId of obsoleteIds) {
           await db('notification').where('id', oldId).delete();
+          await db('broadcast').where('id', oldId).delete();
         }
 
-        const demoBroadcasts = [
+        const demoBroadcasts: Array<{
+          id: string;
+          title: string;
+          link?: string;
+          origin?: string;
+          topic?: string;
+          icon?: string;
+        }> = [
           {
             id: 'demo-broadcast-personal-v1',
             title:
@@ -130,6 +139,15 @@ export const notificationsPlugin = createBackendPlugin({
               'Your team team-a completed 24 self-service actions this month, saving an estimated 5 days of time.',
             link: '/engineering-insights',
           },
+          {
+            id: 'demo-staleness-reminder-v2',
+            title:
+              "wayback-search hasn't been reviewed in over 90 days. Confirm its catalog info is still accurate to keep your readiness score healthy.",
+            link: '/catalog/default/component/wayback-search',
+            origin: 'catalog',
+            topic: 'catalog-freshness',
+            icon: 'warning',
+          },
         ];
         for (const n of demoBroadcasts) {
           const exists = await db('broadcast').where('id', n.id).first();
@@ -138,13 +156,13 @@ export const notificationsPlugin = createBackendPlugin({
               id: n.id,
               user: null,
               created: new Date(),
-              origin: 'scaffolder',
+              origin: n.origin ?? 'scaffolder',
               payload: {
                 title: n.title,
                 severity: 'normal',
-                topic: 'scaffolder',
-                icon: 'badge',
-                ...('link' in n && n.link ? { link: n.link } : {}),
+                topic: n.topic ?? 'scaffolder',
+                icon: n.icon ?? 'badge',
+                ...(n.link ? { link: n.link } : {}),
               },
             });
           }

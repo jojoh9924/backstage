@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -30,6 +30,7 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import { RELATION_OWNED_BY } from '@backstage/catalog-model';
 import { useEntity } from '../../hooks/useEntity';
 import { getEntityRelations } from '../../utils/getEntityRelations';
+import { registerCard, unregisterCard, confirmCard } from './freshnessStore';
 
 const PROMPT_BANNER_OWNERS = new Set(['team-a']);
 
@@ -142,14 +143,23 @@ export interface EntityInfoCardProps {
   footerActions?: ReactNode;
   children?: ReactNode;
   className?: string;
+  /** Unique identifier for this card instance (used for freshness tracking). */
+  cardId?: string;
   /** Called when the user clicks "Update" on the stale-data prompt banner. */
   onUpdate?: () => void;
 }
 
 /** @public */
 export function EntityInfoCard(props: EntityInfoCardProps) {
-  const { title, headerActions, footerActions, children, className, onUpdate } =
-    props;
+  const {
+    title,
+    headerActions,
+    footerActions,
+    children,
+    className,
+    cardId,
+    onUpdate,
+  } = props;
   const classes = useStyles();
 
   const [confirmed, setConfirmed] = useState(false);
@@ -157,16 +167,36 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
   let entityName: string | undefined;
   let entityStale = false;
   let showPromptBanner = false;
+  let inherentlyStale = false;
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { entity } = useEntity();
     entityName = entity.metadata.name;
-    entityStale = !confirmed && isStale(getLastUpdatedText(entityName));
+    inherentlyStale = isStale(getLastUpdatedText(entityName));
+    entityStale = !confirmed && inherentlyStale;
     const owners = getEntityRelations(entity, RELATION_OWNED_BY);
     showPromptBanner = owners.some(ref => PROMPT_BANNER_OWNERS.has(ref.name));
   } catch {
     entityName = undefined;
   }
+
+  const shouldRegister =
+    inherentlyStale && showPromptBanner && !!cardId && !!entityName;
+
+  useEffect(() => {
+    if (shouldRegister) {
+      registerCard(entityName!, cardId!);
+      return () => unregisterCard(entityName!, cardId!);
+    }
+    return undefined;
+  }, [shouldRegister, entityName, cardId]);
+
+  const handleConfirm = () => {
+    setConfirmed(true);
+    if (entityName && cardId) {
+      confirmCard(entityName, cardId);
+    }
+  };
 
   return (
     <div className={classes.wrapper}>
@@ -179,7 +209,7 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
           <button
             type="button"
             className={classes.stalePromptAction}
-            onClick={() => setConfirmed(true)}
+            onClick={handleConfirm}
           >
             Yes
           </button>
