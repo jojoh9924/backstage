@@ -94,9 +94,10 @@ function computeReadinessScore(entity: Entity): number {
 }
 
 function scoreColor(score: number): string {
+  if (score >= 10) return '#1565c0';
   if (score >= 7) return '#2e7d32';
-  if (score >= 4) return '#e5a000';
-  return '#c62828';
+  if (score >= 4) return '#f9a825';
+  return '#d32f2f';
 }
 
 // The columnFactories symbol is not directly exported, but through the

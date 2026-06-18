@@ -45,6 +45,21 @@ const TOP_TEMPLATES = [
   { name: 'Spring Boot gRPC Service', executions: 2 },
 ];
 
+const READINESS_COMPONENTS = [
+  { name: 'wayback-search', score: 4.0 },
+  { name: 'wayback-archive', score: 5.5 },
+  { name: 'wayback-archive-storage', score: 5.5 },
+  { name: 'www-artist', score: 7.0 },
+  { name: 'artist-lookup', score: 7.5 },
+];
+
+const READINESS_TIERS = [
+  { label: 'Low (0\u20133.9)', min: 0, max: 4, color: '#d32f2f' },
+  { label: 'Medium (4\u20136.9)', min: 4, max: 7, color: '#f9a825' },
+  { label: 'High (7\u20139.9)', min: 7, max: 10, color: '#2e7d32' },
+  { label: 'Perfect (10)', min: 10, max: 10.1, color: '#1565c0' },
+];
+
 const CHART_W = 460;
 const CHART_H = 200;
 const CHART_PAD = { top: 10, right: 10, bottom: 30, left: 40 };
@@ -160,6 +175,22 @@ const useStyles = makeStyles(theme => ({
     textDecoration: 'none',
     '&:hover': { textDecoration: 'underline' },
   },
+  readinessLegend: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+    marginTop: theme.spacing(1),
+    fontSize: '0.75rem',
+    flexWrap: 'wrap' as const,
+  },
+  readinessLegendDot: {
+    display: 'inline-block',
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    marginRight: 4,
+    verticalAlign: 'middle',
+  },
 }));
 
 function ActiveUsersChart() {
@@ -221,6 +252,110 @@ function ActiveUsersChart() {
         </g>
       ))}
     </svg>
+  );
+}
+
+function ReadinessScoreChart() {
+  const classes = useStyles();
+
+  const tierCounts = READINESS_TIERS.map(tier => ({
+    ...tier,
+    count: READINESS_COMPONENTS.filter(
+      c => c.score >= tier.min && c.score < tier.max,
+    ).length,
+  }));
+
+  const total = READINESS_COMPONENTS.length;
+  const r = 70;
+  const cx = 100;
+  const cy = 95;
+  const circumference = 2 * Math.PI * r;
+
+  let cumulativeArc = 0;
+  const segments = tierCounts
+    .filter(t => t.count > 0)
+    .map(tier => {
+      const arc = (tier.count / total) * circumference;
+      const seg = { ...tier, arc, offset: -cumulativeArc };
+      cumulativeArc += arc;
+      return seg;
+    });
+
+  return (
+    <InfoCard title="Readiness Score Distribution">
+      <Typography className={classes.chartSummary}>
+        team-a &mdash; {total} components
+      </Typography>
+      <svg
+        viewBox="0 0 200 200"
+        width="100%"
+        style={{ display: 'block', maxWidth: 200, margin: '0 auto' }}
+      >
+        {segments.map(seg => (
+          <circle
+            key={seg.label}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={20}
+            strokeLinecap="round"
+            strokeDasharray={`${seg.arc} ${circumference - seg.arc}`}
+            strokeDashoffset={seg.offset}
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        ))}
+        <circle cx={cx} cy={cy} r={55} fill="white" />
+        {segments.map(seg => {
+          const pct = Math.round((seg.count / total) * 100);
+          const midArc =
+            ((-seg.offset + seg.arc / 2) / circumference) * 2 * Math.PI -
+            Math.PI / 2;
+          const labelR = r;
+          const lx = cx + labelR * Math.cos(midArc);
+          const ly = cy + labelR * Math.sin(midArc);
+          return (
+            <text
+              key={`lbl-${seg.label}`}
+              x={lx}
+              y={ly}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={10}
+              fontWeight={700}
+              fill="#fff"
+            >
+              {pct}%
+            </text>
+          );
+        })}
+        <text
+          x={cx}
+          y={cy - 6}
+          textAnchor="middle"
+          fontSize={22}
+          fontWeight={700}
+          fill="#333"
+        >
+          {total}
+        </text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#999">
+          components
+        </text>
+      </svg>
+      <div className={classes.readinessLegend}>
+        {tierCounts.map(tier => (
+          <span key={tier.label}>
+            <span
+              className={classes.readinessLegendDot}
+              style={{ background: tier.color }}
+            />
+            {tier.label} ({tier.count})
+          </span>
+        ))}
+      </div>
+    </InfoCard>
   );
 }
 
@@ -291,92 +426,93 @@ export function AdoptionInsightsPage() {
           </Grid>
 
           <Grid item xs={12} md={5}>
-            <Grid container spacing={3} direction="column">
-              <Grid item>
-                <InfoCard
-                  title={
-                    <div className={classes.timeSavedHeader}>
-                      <Typography variant="h6">
-                        Total estimated time saved
-                      </Typography>
-                      <Tooltip title="Estimated based on template time-saved annotations">
-                        <IconButton size="small">
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </div>
-                  }
+            <InfoCard
+              title={
+                <div className={classes.timeSavedHeader}>
+                  <Typography variant="h6">
+                    Total estimated time saved
+                  </Typography>
+                  <Tooltip title="Estimated based on template time-saved annotations">
+                    <IconButton size="small">
+                      <InfoOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              }
+            >
+              <Select
+                value="all"
+                variant="outlined"
+                size="small"
+                className={classes.teamSelect}
+                fullWidth
+              >
+                <MenuItem value="all">All teams</MenuItem>
+                <MenuItem value="platform">Platform</MenuItem>
+                <MenuItem value="frontend">Frontend</MenuItem>
+              </Select>
+              <div className={classes.metricGrid}>
+                <div style={{ gridColumn: 1, gridRow: 1 }} />
+                <Typography className={classes.metricFromLabel}>
+                  from
+                </Typography>
+                <Typography
+                  className={classes.metricValue}
+                  style={{ gridColumn: 1, gridRow: 2 }}
                 >
-                  <Select
-                    value="all"
-                    variant="outlined"
-                    size="small"
-                    className={classes.teamSelect}
-                    fullWidth
-                  >
-                    <MenuItem value="all">All teams</MenuItem>
-                    <MenuItem value="platform">Platform</MenuItem>
-                    <MenuItem value="frontend">Frontend</MenuItem>
-                  </Select>
-                  <div className={classes.metricGrid}>
-                    <div style={{ gridColumn: 1, gridRow: 1 }} />
-                    <Typography className={classes.metricFromLabel}>
-                      from
-                    </Typography>
-                    <Typography
-                      className={classes.metricValue}
-                      style={{ gridColumn: 1, gridRow: 2 }}
-                    >
-                      10 <span className={classes.metricUnit}>days</span> 12{' '}
-                      <span className={classes.metricUnit}>hours</span>
-                    </Typography>
-                    <Typography
-                      className={classes.metricValue}
-                      style={{ gridColumn: 2, gridRow: 2 }}
-                    >
-                      36
-                    </Typography>
-                    <Typography
-                      className={classes.metricLabel}
-                      style={{ gridColumn: 1, gridRow: 3 }}
-                    >
-                      estimated time saved
-                    </Typography>
-                    <Typography
-                      className={classes.metricLabel}
-                      style={{ gridColumn: 2, gridRow: 3 }}
-                    >
-                      self-service actions
-                    </Typography>
-                  </div>
-                </InfoCard>
-              </Grid>
+                  10 <span className={classes.metricUnit}>days</span> 12{' '}
+                  <span className={classes.metricUnit}>hours</span>
+                </Typography>
+                <Typography
+                  className={classes.metricValue}
+                  style={{ gridColumn: 2, gridRow: 2 }}
+                >
+                  36
+                </Typography>
+                <Typography
+                  className={classes.metricLabel}
+                  style={{ gridColumn: 1, gridRow: 3 }}
+                >
+                  estimated time saved
+                </Typography>
+                <Typography
+                  className={classes.metricLabel}
+                  style={{ gridColumn: 2, gridRow: 3 }}
+                >
+                  self-service actions
+                </Typography>
+              </div>
+            </InfoCard>
+          </Grid>
+        </Grid>
 
-              <Grid item>
-                <InfoCard title="Top 3 templates">
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell align="right">Executions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {TOP_TEMPLATES.map(t => (
-                        <TableRow key={t.name}>
-                          <TableCell>
-                            <Link to="/create" className={classes.templateLink}>
-                              {t.name}
-                            </Link>
-                          </TableCell>
-                          <TableCell align="right">{t.executions}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </InfoCard>
-              </Grid>
-            </Grid>
+        <Grid container spacing={3} style={{ marginTop: 0 }}>
+          <Grid item xs={12} md={7}>
+            <ReadinessScoreChart />
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <InfoCard title="Top 3 templates">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell align="right">Executions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {TOP_TEMPLATES.map(t => (
+                    <TableRow key={t.name}>
+                      <TableCell>
+                        <Link to="/create" className={classes.templateLink}>
+                          {t.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell align="right">{t.executions}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </InfoCard>
           </Grid>
         </Grid>
       </Content>
