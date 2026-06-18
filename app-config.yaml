@@ -291,6 +291,7 @@ catalog:
         - System
         - Domain
         - Location
+        - Template
   providers:
     azureBlob:
       accountName: ${ACCOUNT_NAME}
