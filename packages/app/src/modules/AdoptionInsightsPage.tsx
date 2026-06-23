@@ -50,7 +50,7 @@ const TOP_TEMPLATES = [
   { name: 'Spring Boot gRPC Service', executions: 2, timeSaved: '16hrs' },
 ];
 
-function computeAccuracyScore(entity: Entity): number {
+function computeCompletenessScore(entity: Entity): number {
   let score = 0;
   const meta = entity.metadata;
   const spec = entity.spec as Record<string, unknown> | undefined;
@@ -296,7 +296,7 @@ function ActiveUsersChart() {
   );
 }
 
-function AccuracyScoreChart() {
+function CompletenessScoreChart() {
   const classes = useStyles();
   const catalogApi = useApi(catalogApiRef);
   const [components, setComponents] = useState<
@@ -313,7 +313,7 @@ function AccuracyScoreChart() {
           response.items.map(entity => ({
             name: entity.metadata.name,
             owner: ((entity.spec as Record<string, unknown> | undefined)?.owner as string) ?? 'unknown',
-            score: computeAccuracyScore(entity),
+            score: computeCompletenessScore(entity),
           })),
         );
       })
@@ -322,7 +322,7 @@ function AccuracyScoreChart() {
 
   if (loading) {
     return (
-      <InfoCard title="Accuracy Score Distribution">
+      <InfoCard title="Completeness Score Distribution">
         <Progress />
       </InfoCard>
     );
@@ -352,7 +352,7 @@ function AccuracyScoreChart() {
     });
 
   return (
-    <InfoCard title="Accuracy Score Distribution">
+    <InfoCard title="Completeness Score Distribution">
       <Typography className={classes.chartSummary}>
         All teams &mdash; {total} components
       </Typography>
@@ -577,7 +577,7 @@ export function AdoptionInsightsPage() {
 
         <Grid container spacing={3} style={{ marginTop: 0 }}>
           <Grid item xs={12} md={7}>
-            <AccuracyScoreChart />
+            <CompletenessScoreChart />
           </Grid>
         </Grid>
       </Content>

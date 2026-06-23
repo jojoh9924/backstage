@@ -42,7 +42,7 @@ export const defaultCatalogTableColumnsFunc: CatalogTableColumnsFunc = ({
   function createEntitySpecificColumns(): TableColumn<CatalogTableRow>[] {
     const descriptionTagColumns = [
       columnFactories.createMetadataDescriptionColumn(),
-      columnFactories.createAccuracyScoreColumn(),
+      columnFactories.createCompletenessScoreColumn(),
       columnFactories.createTagsColumn(),
     ];
     const baseColumns = [

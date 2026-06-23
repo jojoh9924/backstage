@@ -65,7 +65,7 @@ function isDataFresh(entityName: string): boolean {
   return true;
 }
 
-function computeAccuracyScore(
+function computeCompletenessScore(
   entity: Entity,
   freshnessFraction: number,
 ): number {
@@ -117,13 +117,13 @@ export function EntityLabels(props: EntityLabelsProps) {
 
   useSyncExternalStore(freshnessSubscribe, freshnessGetSnapshot);
   const fraction = getFreshnessFraction(entity.metadata.name);
-  const score = computeAccuracyScore(entity, fraction);
+  const score = computeCompletenessScore(entity, fraction);
   const color = scoreColor(score);
 
   return (
     <>
       <div
-        title={`Accuracy Score: ${score} / 10`}
+        title={`Completeness Score: ${score} / 10`}
         style={{
           display: 'inline-flex',
           alignItems: 'center',

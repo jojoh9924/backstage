@@ -67,7 +67,7 @@ function isDataFresh(entityName: string): boolean {
   return true;
 }
 
-function computeAccuracyScore(entity: Entity): number {
+function computeCompletenessScore(entity: Entity): number {
   let raw = 0;
   if (getEntityRelations(entity, RELATION_OWNED_BY).length > 0) raw += 1.5;
   if (entity.metadata?.description) raw += 1.5;
@@ -321,13 +321,13 @@ export const columnFactories = Object.freeze({
       width: 'auto',
     };
   },
-  createAccuracyScoreColumn(): TableColumn<CatalogTableRow> {
+  createCompletenessScoreColumn(): TableColumn<CatalogTableRow> {
     return {
       title: (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          Accuracy
+          Completeness
           <Tooltip
-            title="The accuracy score (0–10) measures how complete and fresh a catalog entry is."
+            title="The completeness score (0–10) measures how complete and fresh a catalog entry is."
             arrow
             placement="top"
           >
@@ -356,10 +356,10 @@ export const columnFactories = Object.freeze({
       headerStyle: { textAlign: 'center' },
       cellStyle: { textAlign: 'center', paddingRight: 60 },
       customSort({ entity: a }, { entity: b }) {
-        return computeAccuracyScore(a) - computeAccuracyScore(b);
+        return computeCompletenessScore(a) - computeCompletenessScore(b);
       },
       render: ({ entity }) => {
-        const score = computeAccuracyScore(entity);
+        const score = computeCompletenessScore(entity);
         const color = scoreColor(score);
         const namespace = entity.metadata.namespace || 'default';
         const kind = entity.kind.toLocaleLowerCase('en-US');
@@ -368,7 +368,7 @@ export const columnFactories = Object.freeze({
         return (
           <a
             href={href}
-            title={`Accuracy Score: ${score.toFixed(1)} / 10`}
+            title={`Completeness Score: ${score.toFixed(1)} / 10`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
