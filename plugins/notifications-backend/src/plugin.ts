@@ -142,7 +142,7 @@ export const notificationsPlugin = createBackendPlugin({
           {
             id: 'demo-staleness-reminder-v2',
             title:
-              "wayback-search hasn't been reviewed in over 90 days. Confirm its catalog info is still accurate to keep your readiness score healthy.",
+              "wayback-search hasn't been reviewed in over 90 days. Confirm its catalog info is still accurate to keep your completeness score healthy.",
             link: '/catalog/default/component/wayback-search',
             origin: 'catalog',
             topic: 'catalog-freshness',

@@ -77,7 +77,7 @@ function computeCompletenessScore(entity: Entity): number {
   return Math.min(score, 10);
 }
 
-const READINESS_TIERS = [
+const COMPLETENESS_TIERS = [
   { label: 'Low (0\u20133.9)', min: 0, max: 4, color: '#d32f2f' },
   { label: 'Medium (4\u20136.9)', min: 4, max: 7, color: '#f9a825' },
   { label: 'High (7\u20139.9)', min: 7, max: 10, color: '#2e7d32' },
@@ -199,7 +199,7 @@ const useStyles = makeStyles(theme => ({
     textDecoration: 'none',
     '&:hover': { textDecoration: 'underline' },
   },
-  readinessLegend: {
+  completenessLegend: {
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(2),
@@ -207,7 +207,7 @@ const useStyles = makeStyles(theme => ({
     fontSize: '0.75rem',
     flexWrap: 'wrap' as const,
   },
-  readinessLegendDot: {
+  completenessLegendDot: {
     display: 'inline-block',
     width: 12,
     height: 12,
@@ -328,7 +328,7 @@ function CompletenessScoreChart() {
     );
   }
 
-  const tierCounts = READINESS_TIERS.map(tier => ({
+  const tierCounts = COMPLETENESS_TIERS.map(tier => ({
     ...tier,
     count: components.filter(
       c => c.score >= tier.min && c.score < tier.max,
@@ -419,7 +419,7 @@ function CompletenessScoreChart() {
         </text>
       </svg>
       {selectedTier && (() => {
-        const tier = READINESS_TIERS.find(t => t.label === selectedTier);
+        const tier = COMPLETENESS_TIERS.find(t => t.label === selectedTier);
         if (!tier) return null;
         const filtered = components.filter(
           c => c.score >= tier.min && c.score < tier.max,
@@ -429,7 +429,7 @@ function CompletenessScoreChart() {
             <div className={classes.previewHeader}>
               <Typography className={classes.previewTierLabel}>
                 <span
-                  className={classes.readinessLegendDot}
+                  className={classes.completenessLegendDot}
                   style={{ background: tier.color }}
                 />
                 {tier.label} &mdash; {filtered.length} component{filtered.length !== 1 ? 's' : ''}
@@ -467,11 +467,11 @@ function CompletenessScoreChart() {
           </>
         );
       })()}
-      <div className={classes.readinessLegend}>
+      <div className={classes.completenessLegend}>
         {tierCounts.map(tier => (
           <span key={tier.label}>
             <span
-              className={classes.readinessLegendDot}
+              className={classes.completenessLegendDot}
               style={{ background: tier.color }}
             />
             {tier.label} ({tier.count})
