@@ -45,9 +45,9 @@ const CHART_DATA = [
 ];
 
 const TOP_TEMPLATES = [
-  { name: 'Create React App Template', executions: 11 },
-  { name: 'Documentation Template', executions: 10 },
-  { name: 'Spring Boot gRPC Service', executions: 2 },
+  { name: 'Create React App Template', executions: 11, timeSaved: '55hrs' },
+  { name: 'Documentation Template', executions: 10, timeSaved: '20hrs' },
+  { name: 'Spring Boot gRPC Service', executions: 2, timeSaved: '16hrs' },
 ];
 
 function computeAccuracyScore(entity: Entity): number {
@@ -547,72 +547,6 @@ export function AdoptionInsightsPage() {
               </div>
             </InfoCard>
           </Grid>
-
-          <Grid item xs={12} md={5}>
-            <InfoCard
-              title={
-                <div className={classes.timeSavedHeader}>
-                  <Typography variant="h6">
-                    Total estimated time saved
-                  </Typography>
-                  <Tooltip title="Estimated based on template time-saved annotations">
-                    <IconButton size="small">
-                      <InfoOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              }
-            >
-              <Select
-                value="all"
-                variant="outlined"
-                size="small"
-                className={classes.teamSelect}
-                fullWidth
-              >
-                <MenuItem value="all">All teams</MenuItem>
-                <MenuItem value="platform">Platform</MenuItem>
-                <MenuItem value="frontend">Frontend</MenuItem>
-              </Select>
-              <div className={classes.metricGrid}>
-                <div style={{ gridColumn: 1, gridRow: 1 }} />
-                <Typography className={classes.metricFromLabel}>
-                  from
-                </Typography>
-                <Typography
-                  className={classes.metricValue}
-                  style={{ gridColumn: 1, gridRow: 2 }}
-                >
-                  10 <span className={classes.metricUnit}>days</span> 12{' '}
-                  <span className={classes.metricUnit}>hours</span>
-                </Typography>
-                <Typography
-                  className={classes.metricValue}
-                  style={{ gridColumn: 2, gridRow: 2 }}
-                >
-                  36
-                </Typography>
-                <Typography
-                  className={classes.metricLabel}
-                  style={{ gridColumn: 1, gridRow: 3 }}
-                >
-                  estimated time saved
-                </Typography>
-                <Typography
-                  className={classes.metricLabel}
-                  style={{ gridColumn: 2, gridRow: 3 }}
-                >
-                  self-service actions
-                </Typography>
-              </div>
-            </InfoCard>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3} style={{ marginTop: 0 }}>
-          <Grid item xs={12} md={7}>
-            <AccuracyScoreChart />
-          </Grid>
           <Grid item xs={12} md={5}>
             <InfoCard title="Top 3 templates">
               <Table size="small">
@@ -620,6 +554,7 @@ export function AdoptionInsightsPage() {
                   <TableRow>
                     <TableCell>Name</TableCell>
                     <TableCell align="right">Executions</TableCell>
+                    <TableCell align="right">Est. Time Saved</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -631,11 +566,18 @@ export function AdoptionInsightsPage() {
                         </Link>
                       </TableCell>
                       <TableCell align="right">{t.executions}</TableCell>
+                      <TableCell align="right">{t.timeSaved}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </InfoCard>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={3} style={{ marginTop: 0 }}>
+          <Grid item xs={12} md={7}>
+            <AccuracyScoreChart />
           </Grid>
         </Grid>
       </Content>
