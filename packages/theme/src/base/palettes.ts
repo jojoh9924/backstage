@@ -72,7 +72,7 @@ export const palettes = {
     gold: '#FFD600',
     navigation: {
       background: '#171717',
-      indicator: '#9BF0E1',
+      indicator: '#EE0000',
       color: '#b5b5b5',
       selectedColor: '#FFF',
       navItem: {
@@ -146,7 +146,7 @@ export const palettes = {
     gold: '#FFD600',
     navigation: {
       background: '#424242',
-      indicator: '#9BF0E1',
+      indicator: '#EE0000',
       color: '#b5b5b5',
       selectedColor: '#FFF',
       navItem: {

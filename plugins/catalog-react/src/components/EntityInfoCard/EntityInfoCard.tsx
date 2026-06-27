@@ -93,20 +93,14 @@ const useStyles = makeStyles({
     fontSize: '0.875rem',
     color: '#2e7d32',
   },
-  wrapper: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column' as const,
-  },
   stalePrompt: {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
     padding: '8px 12px',
-    marginBottom: 8,
+    margin: 'var(--bui-space-4, 16px) var(--bui-space-4, 16px) 0',
     borderRadius: 8,
     backgroundColor: 'var(--bui-color-surface-2, #f5f5f5)',
-    border: '3px solid #fff',
     fontSize: '0.8125rem',
     color: 'var(--bui-color-text-subtle, #6b6b6b)',
   },
@@ -203,72 +197,67 @@ export function EntityInfoCard(props: EntityInfoCardProps) {
     }
   };
 
-  return (
-    <div className={classes.wrapper}>
-      {entityStale && showPromptBanner && !suppressBanner && (
-        <div className={classes.stalePrompt}>
-          <CheckCircleIcon className={classes.stalePromptIcon} />
-          <span className={classes.stalePromptText}>
-            Is this still accurate?
-          </span>
-          <button
-            type="button"
-            className={classes.stalePromptAction}
-            onClick={handleConfirm}
-          >
-            Yes
-          </button>
-          <button
-            type="button"
-            className={classes.stalePromptAction}
-            onClick={onUpdate}
-          >
-            Update
-          </button>
-        </div>
-      )}
-      <Card className={classNames(classes.root, className)}>
-        {title && (
-          <CardHeader>
-            <Flex justify="between" align="center">
-              <div className={classes.title}>
-                <Text as="h3" variant="title-x-small" weight="bold">
-                  {title}
-                </Text>
-                {entityName &&
-                  !suppressBanner &&
-                  (() => {
-                    const text = confirmed
-                      ? 'just now'
-                      : getLastUpdatedText(entityName);
-                    return (
-                      <span className={classes.lastUpdated}>
-                        {confirmed ||
-                        !isStale(getLastUpdatedText(entityName)) ? (
-                          <CheckCircleIcon
-                            className={classes.statusIconFresh}
-                          />
-                        ) : (
-                          <WarningIcon className={classes.statusIconStale} />
-                        )}
-                        Last updated {text}
-                      </span>
-                    );
-                  })()}
-              </div>
-              {headerActions && (
-                <Flex align="center" gap="1">
-                  {headerActions}
-                </Flex>
-              )}
-            </Flex>
-          </CardHeader>
-        )}
-        <CardBody>{children}</CardBody>
-        {footerActions && (
-          <CardFooter className={classes.footer}>{footerActions}</CardFooter>
-        )}
-      </Card>
+  const staleBanner = entityStale && showPromptBanner && !suppressBanner && (
+    <div className={classes.stalePrompt}>
+      <CheckCircleIcon className={classes.stalePromptIcon} />
+      <span className={classes.stalePromptText}>Is this still accurate?</span>
+      <button
+        type="button"
+        className={classes.stalePromptAction}
+        onClick={handleConfirm}
+      >
+        Yes
+      </button>
+      <button
+        type="button"
+        className={classes.stalePromptAction}
+        onClick={onUpdate}
+      >
+        Update
+      </button>
     </div>
+  );
+
+  return (
+    <Card className={classNames(classes.root, className)}>
+      {staleBanner}
+      {title && (
+        <CardHeader>
+          <Flex justify="between" align="center">
+            <div className={classes.title}>
+              <Text as="h3" variant="title-x-small" weight="bold">
+                {title}
+              </Text>
+              {entityName &&
+                !suppressBanner &&
+                (() => {
+                  const text = confirmed
+                    ? 'just now'
+                    : getLastUpdatedText(entityName);
+                  return (
+                    <span className={classes.lastUpdated}>
+                      {confirmed || !isStale(getLastUpdatedText(entityName)) ? (
+                        <CheckCircleIcon className={classes.statusIconFresh} />
+                      ) : (
+                        <WarningIcon className={classes.statusIconStale} />
+                      )}
+                      Last updated {text}
+                    </span>
+                  );
+                })()}
+            </div>
+            {headerActions && (
+              <Flex align="center" gap="1">
+                {headerActions}
+              </Flex>
+            )}
+          </Flex>
+        </CardHeader>
+      )}
+      <CardBody>{children}</CardBody>
+      {footerActions && (
+        <CardFooter className={classes.footer}>{footerActions}</CardFooter>
+      )}
+    </Card>
   );
 }

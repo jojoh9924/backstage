@@ -35,7 +35,7 @@ import { UserSettingsSignInAvatar } from '@backstage/plugin-user-settings';
 import { makeStyles } from '@material-ui/core/styles';
 import rhdhLogo from '../assets/rhdh-logo.png';
 
-const useSidebarLogoStyles = makeStyles({
+const useSidebarLogoStyles = makeStyles(theme => ({
   root: {
     width: sidebarConfig.drawerWidthClosed,
     height: 3 * sidebarConfig.logoHeight,
@@ -43,13 +43,14 @@ const useSidebarLogoStyles = makeStyles({
     flexFlow: 'row nowrap',
     alignItems: 'center',
     marginBottom: -14,
+    background: theme.palette.navigation.background,
   },
   link: {
     width: sidebarConfig.drawerWidthClosed,
     marginLeft: 24,
     textDecoration: 'none',
   },
-});
+}));
 
 const SidebarLogo = () => {
   const classes = useSidebarLogoStyles();
@@ -57,7 +58,11 @@ const SidebarLogo = () => {
   return (
     <div className={classes.root}>
       <Link to="/" className={classes.link} aria-label="Home">
-        <img src={rhdhLogo} alt="Red Hat Developer Hub" style={{ height: 30 }} />
+        <img
+          src={rhdhLogo}
+          alt="Red Hat Developer Hub"
+          style={{ height: 30, mixBlendMode: 'screen' }}
+        />
       </Link>
     </div>
   );

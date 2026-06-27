@@ -49,8 +49,8 @@ const FALLBACK_TIME_SAVED = 'unknown';
 function ClockIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="12"
+      height="12"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -97,10 +97,6 @@ export function BuiTemplateCard(props: TemplateCardComponentProps) {
 
   return (
     <Card className={styles.templateCard}>
-      <span className={styles.timeSavedBadge}>
-        <ClockIcon />
-        Est. time saved: {timeSaved}
-      </span>
       <CardHeader>
         <Text
           as="h3"
@@ -123,13 +119,15 @@ export function BuiTemplateCard(props: TemplateCardComponentProps) {
             {description}
           </Text>
         )}
-        {visibleTags.length > 0 && (
-          <TagGroup>
-            {visibleTags.map(t => (
-              <Tag key={t}>{t!}</Tag>
-            ))}
-          </TagGroup>
-        )}
+        <TagGroup>
+          <Tag id="time-saved">
+            <ClockIcon />
+            Est. time saved: {timeSaved}
+          </Tag>
+          {visibleTags.map(t => (
+            <Tag key={t}>{t!}</Tag>
+          ))}
+        </TagGroup>
       </Box>
       <CardFooter>
         <Flex justify="between" align="end">
